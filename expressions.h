@@ -3,6 +3,7 @@
 #include "types.h"
 
 union token {
+  int START;
   int LBRAC;
   int LCURL;
   int RBRAC;
@@ -16,20 +17,25 @@ union token {
   int FOR;
   int FN;
   int RETURN;
-}
+  int OBJECT;
+};
 
 struct node {
-  union token token;
   int id;
-  struct node childNode;
-  struct node parentNode;
+  int token;
+  t_object* object;
+  struct node *next;
+  struct node *prev;
 };
 
 typedef struct {
-  struct node root;
+  struct node *node;
   union token tokens;
-  struct node* branches;
 } t_ast;
+
+typedef struct {
+  t_ast* ast;
+} t_expression;
 
 union token initTokens();
 t_ast* parse (char* e);

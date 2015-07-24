@@ -50,10 +50,6 @@ typedef struct {
   char* ast;
 } t_method;
 
-typedef struct {
-  char* ast;
-} t_expression;
-
 int newObjectId();
 t_methodlist* newMethodlist();
 t_fieldlist* newFieldlist();
