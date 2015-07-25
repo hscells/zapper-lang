@@ -34,7 +34,7 @@ void repl_init() {
   printf("%s", ">>> ");
   while (EXIT_STATUS == 0 && fgets(input, INPUT_SIZE, stdin)) {
     t_expression *expression = (t_expression*) malloc(sizeof(t_expression));
-    expression->ast = parse(input);
+    expression->ast = parse(input, 0);
     eval(expression);
     free(expression);
 
