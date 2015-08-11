@@ -2,6 +2,7 @@
 #include "objects.h"
 #include "types.h"
 #include "expressions.h"
+#include "garbage.h"
 
 #include "system.h"
 
@@ -13,18 +14,26 @@ void repl_init();
 
 int main(int argc, char const *argv[]) {
 
+  // initiate the type system
+  initTypes();
+  // create a heap for the vm to run
   t_heap* heap = newHeap();
+  // create a stack on the heap for the main class
   t_stack* mainStack = newStack();
 
 
-  t_fieldlist* fields = newFieldlist();
-  t_methodlist* methods = newMethodlist();
-  addFieldToFieldlist(fields, "money", Int(), newInt(420, mainStack, heap));
-  t_object* shop = newObject(methods, fields);
+  // testing....
+  t_object* shop = newObject();
+  addFieldToFieldlist(shop->fields, "money", Type->Int, newInt(420, mainStack, heap));
 
   z_println(shop->fields->field[0]->object);
 
   repl_init();
+
+  free(heap);
+  free(mainStack);
+
+  collect(shop);
 
   return 0;
 }

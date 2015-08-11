@@ -26,7 +26,7 @@ t_fieldlist* newFieldlist() {
   return fields;
 }
 
-void addMethodToMethodlist(t_methodlist* methodlist, char* name, t_type* type) {
+void addMethodToMethodlist(t_methodlist* methodlist, char* name, int type) {
   methodlist->method[methodlist->index] = (t_symbol*) malloc(sizeof(t_symbol));
   methodlist->method[methodlist->index]->type = type;
   methodlist->method[methodlist->index]->object = NULL;
@@ -34,7 +34,7 @@ void addMethodToMethodlist(t_methodlist* methodlist, char* name, t_type* type) {
   methodlist->index++;
 }
 
-void addFieldToFieldlist(t_fieldlist* fieldlist, char* name, t_type* type, t_object* object) {
+void addFieldToFieldlist(t_fieldlist* fieldlist, char* name, int type, t_object* object) {
   fieldlist->field[fieldlist->index] = (t_symbol*) malloc(sizeof(t_symbol));
   fieldlist->field[fieldlist->index]->type = type;
   fieldlist->field[fieldlist->index]->object = object;
@@ -50,17 +50,12 @@ void addFieldlistToObject(t_object* object, t_fieldlist* fieldlist) {
   object->fields = fieldlist;
 }
 
-t_object* newPartialObject() {
+t_object* newObject() {
   t_object *obj = (t_object*) malloc(sizeof(t_object));
   obj->id = newObjectId();
+  obj->fields = newFieldlist();
+  obj->methods = newMethodlist();
   return obj;
-}
-
-t_object* newObject(t_methodlist* methodlist, t_fieldlist* fieldlist) {
-  t_object* object = newPartialObject();
-  addMethodlistToObject(object, methodlist);
-  addFieldlistToObject(object, fieldlist);
-  return object;
 }
 
 t_heap* newHeap() {
