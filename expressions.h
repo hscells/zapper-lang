@@ -13,6 +13,15 @@ typedef struct {
   int FN;
   int RETURN;
   int OBJECT;
+  int INT;
+  int FLOAT;
+  int CHAR;
+  int STRING;
+  int LIST;
+  int COMMA;
+  int DOT;
+  int CLASS;
+  int NEW;
 } t_token;
 
 typedef struct {
@@ -28,6 +37,7 @@ typedef struct {
   int PRINT;
   int READ;
   int EXCEPT;
+  int EXIT;
 } t_system;
 
 struct node {

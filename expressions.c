@@ -3,6 +3,7 @@
 #include <strings.h>
 #include "expressions.h"
 #include "system.h"
+#include "types.h"
 
 int node_id = 0;
 
@@ -18,6 +19,15 @@ t_token* initTokens() {
   tokens->FN     = 0x0007;
   tokens->RETURN = 0x0008;
   tokens->OBJECT = 0x0009;
+  tokens->INT    = 0x0010;
+  tokens->FLOAT  = 0x0011;
+  tokens->CHAR   = 0x0012;
+  tokens->STRING = 0x0013;
+  tokens->LIST   = 0x0014;
+  tokens->COMMA  = 0x0015;
+  tokens->DOT    = 0x0016;
+  tokens->CLASS  = 0x0017;
+  tokens->NEW    = 0x0018;
   return tokens;
 }
 
@@ -71,7 +81,7 @@ struct node* newObjectNode(t_object* object, t_ast* ast) {
 t_ast* parse(char* e, int index) {
   int i;
   char c;
-  // char* tok;
+  char* tok;
   t_ast* ast = newAst();
   ast->node = newTokenNode(ast->tokens->START, ast);
   struct node* starting_node = ast->node;
@@ -88,7 +98,7 @@ t_ast* parse(char* e, int index) {
       ast->node->next = newTokenNode(ast->tokens->RCURL, ast);
     } else {
       while (c != '(' && c != ')' && c != '{' && c != '}') {
-        // tok = strcat(tok, (char*)c);
+        tok = strcat(tok, (char*)c);
         i++;
       }
       z_exception("Invalid token",0,i);
