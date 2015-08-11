@@ -4,19 +4,22 @@
 #include <stdlib.h>
 
 typedef struct {
-  int type;
+  int Int;
+  int Float;
+  int Char;
+  int String;
+  int List;
 } t_type;
-
-t_type* Int();
-t_type* t_char();
-t_type* t_string();
 
 union generic {
   int i;
   char c;
   char* s;
+  float f;
 };
 
-int getType(t_type *type);
+t_type* Type;
 
+int getType(int type);
+void initTypes();
 #endif
