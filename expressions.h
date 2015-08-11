@@ -23,7 +23,10 @@ typedef struct {
   int EQ;
   int LT;
   int GT;
+  int LTEQ;
+  int GTEQ;
   int PRINT;
+  int READ;
   int EXCEPT;
 } t_system;
 

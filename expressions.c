@@ -30,8 +30,11 @@ t_system* initSystem() {
   system->EQ     = 0xa004;
   system->LT     = 0xa005;
   system->GT     = 0xa006;
-  system->PRINT  = 0xa006;
-  system->EXCEPT = 0xa006;
+  system->LTEQ   = 0xa007;
+  system->GTEQ   = 0xa008;
+  system->PRINT  = 0xa009;
+  system->READ   = 0xa010;
+  system->EXCEPT = 0xa011;
   return system;
 }
 
@@ -68,7 +71,7 @@ struct node* newObjectNode(t_object* object, t_ast* ast) {
 t_ast* parse(char* e, int index) {
   int i;
   char c;
-  char* tok;
+  // char* tok;
   t_ast* ast = newAst();
   ast->node = newTokenNode(ast->tokens->START, ast);
   struct node* starting_node = ast->node;
