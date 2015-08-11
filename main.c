@@ -26,12 +26,13 @@ int main(int argc, char const *argv[]) {
   t_object* shop = newObject();
   addFieldToFieldlist(shop->fields, "money", Type->Int, newInt(420, mainStack, heap));
 
-  z_println(shop->fields->field[0]->object);
+  // z_println(shop->fields->field[0]->object);
 
   repl_init();
 
   free(heap);
   free(mainStack);
+  free(Type);
 
   collect(shop);
 
@@ -44,7 +45,9 @@ void repl_init() {
   while (EXIT_STATUS == 0 && fgets(input, INPUT_SIZE, stdin)) {
     t_expression *expression = (t_expression*) malloc(sizeof(t_expression));
     expression->ast = parse(input, 0);
+
     eval(expression);
+    free(expression->ast);
     free(expression);
 
     if (EXIT_STATUS == 0) {

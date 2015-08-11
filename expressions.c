@@ -28,6 +28,7 @@ t_token* initTokens() {
   tokens->DOT    = 0x0016;
   tokens->CLASS  = 0x0017;
   tokens->NEW    = 0x0018;
+  tokens->SYMBOL = 0x0019;
   return tokens;
 }
 
@@ -50,7 +51,7 @@ t_system* initSystem() {
 
 t_ast* newAst () {
   t_token* tokens = initTokens();
-  printf("%d\n", tokens->START);
+  // printf("%d\n", tokens->START);
   t_system* system = initSystem();
   t_ast* ast = (t_ast*) malloc(sizeof(t_ast));
   ast->tokens = tokens;
@@ -81,30 +82,102 @@ struct node* newObjectNode(t_object* object, t_ast* ast) {
 t_ast* parse(char* e, int index) {
   int i;
   char c;
-  char* tok;
+  char tok[255];
   t_ast* ast = newAst();
   ast->node = newTokenNode(ast->tokens->START, ast);
   struct node* starting_node = ast->node;
 
   for(i = index; i < strlen(e) - 1; i++) {
+    memset(tok,0,sizeof(tok));
     c = e[i];
+
+    // add individual tokens to the ast
     if (c == '(') {
       ast->node->next = newTokenNode(ast->tokens->LBRAC, ast);
-    } else if (c == ')') {
+      ast->node = ast->node->next;
+      c = e[i++];
+    }
+
+    if (c == ')') {
       ast->node->next = newTokenNode(ast->tokens->RBRAC, ast);
-    } else if (c == '{') {
+      ast->node = ast->node->next;
+      c = e[i++];
+    }
+
+    if (c == '{') {
       ast->node->next = newTokenNode(ast->tokens->LCURL, ast);
-    } else if (c == '}') {
+      ast->node = ast->node->next;
+      c = e[i++];
+    }
+
+    if (c == '}') {
       ast->node->next = newTokenNode(ast->tokens->RCURL, ast);
-    } else {
-      while (c != '(' && c != ')' && c != '{' && c != '}') {
-        tok = strcat(tok, (char*)c);
-        i++;
+      ast->node = ast->node->next;
+      c = e[i++];
+    }
+
+    if (c == '.') {
+      ast->node->next = newTokenNode(ast->tokens->DOT, ast);
+      ast->node = ast->node->next;
+      c = e[i++];
+    }
+
+    if (c == ',') {
+      ast->node->next = newTokenNode(ast->tokens->COMMA, ast);
+      ast->node = ast->node->next;
+      c = e[i++];
+    }
+
+    // add tokens which are >1 character in length
+    while (c != '(' && i < strlen(e)) {
+      strcat(tok, &c);
+      i++;
+      c = e[i];
+    }
+    if (strlen(tok) > 0) {
+      // printf("\ni:%d - %s (%lu)\n",i,tok,strlen(tok));
+      if (strcmp(tok,"if") == 0) {
+        ast->node->next = newTokenNode(ast->tokens->IF, ast);
+        ast->node = ast->node->next;
+      } else if (strcmp(tok, "for") == 0) {
+        ast->node->next = newTokenNode(ast->tokens->FOR, ast);
+        ast->node = ast->node->next;
+      } else if (strcmp(tok, "fn") == 0) {
+        ast->node->next = newTokenNode(ast->tokens->FN, ast);
+        ast->node = ast->node->next;
+      } else if (strcmp(tok, "return") == 0) {
+        ast->node->next = newTokenNode(ast->tokens->RETURN, ast);
+        ast->node = ast->node->next;
+      } else if (strcmp(tok, "int") == 0) {
+        ast->node->next = newTokenNode(ast->tokens->INT, ast);
+        ast->node = ast->node->next;
+      } else if (strcmp(tok, "float") == 0) {
+        ast->node->next = newTokenNode(ast->tokens->FLOAT, ast);
+        ast->node = ast->node->next;
+      } else if (strcmp(tok, "char") == 0) {
+        ast->node->next = newTokenNode(ast->tokens->CHAR, ast);
+        ast->node = ast->node->next;
+      } else if (strcmp(tok, "string") == 0) {
+        ast->node->next = newTokenNode(ast->tokens->STRING, ast);
+        ast->node = ast->node->next;
+      } else if (strcmp(tok, "list") == 0) {
+        ast->node->next = newTokenNode(ast->tokens->LIST, ast);
+        ast->node = ast->node->next;
+      } else if (strcmp(tok, "class") == 0) {
+        ast->node->next = newTokenNode(ast->tokens->CLASS, ast);
+        ast->node = ast->node->next;
+      } else if (strcmp(tok, "new") == 0) {
+        ast->node->next = newTokenNode(ast->tokens->NEW, ast);
+        ast->node = ast->node->next;
+      } else {
+        ast->node->next = newTokenNode(ast->tokens->OBJECT, ast);
+        ast->node = ast->node->next;
+        ast->node->object = newObject();
       }
-      z_exception("Invalid token",0,i);
     }
   }
 
+  ast->node->next = NULL;
   ast->node = starting_node;
 
   return ast;
@@ -112,6 +185,13 @@ t_ast* parse(char* e, int index) {
 
 union generic eval(t_expression *expression) {
   union generic value;
-  printf("%d\n", expression->ast->node->id);
+  value.c = 0;
+
+  // print each value of the linked list of nodes
+  struct node* node = expression->ast->node;
+  while(node != NULL){
+    printf("%d\n", node->token);
+    node = node->next;
+  }
   return value;
 }

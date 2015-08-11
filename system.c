@@ -1,9 +1,8 @@
 #include "system.h"
 
 void z_exception(char* e, int l, int c) {
-
   printf("Line: %d, Position: %d\n%s\n", l, c, e);
-  exit(1);
+  exit(2);
 }
 
 int z_add(int a, int b) {
@@ -35,6 +34,10 @@ void z_println(t_object* o) {
       return;
   }
   z_exception("Could not print this object.",0,0);
+}
+
+void z_exit() {
+  exit(1);
 }
 
 t_object* newSystem(t_stack* stack, t_heap* heap) {

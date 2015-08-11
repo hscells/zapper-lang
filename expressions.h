@@ -22,6 +22,7 @@ typedef struct {
   int DOT;
   int CLASS;
   int NEW;
+  int SYMBOL;
 } t_token;
 
 typedef struct {
@@ -40,12 +41,13 @@ typedef struct {
   int EXIT;
 } t_system;
 
+// the node structure is a linked list
 struct node {
   int id;
   int token;
   t_object* object;
   struct node *next;
-  struct node *prev;
+  struct node *prev; // prev actually isn't used
 };
 
 typedef struct {
