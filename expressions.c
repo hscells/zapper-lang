@@ -169,6 +169,42 @@ t_ast* parse(char* e, int index) {
       } else if (strcmp(tok, "new") == 0) {
         ast->node->next = newTokenNode(ast->tokens->NEW, ast);
         ast->node = ast->node->next;
+      } else if (strcmp(tok, "+") == 0) {
+        ast->node->next = newTokenNode(ast->system->ADD, ast);
+        ast->node = ast->node->next;
+      } else if (strcmp(tok, "-") == 0) {
+        ast->node->next = newTokenNode(ast->system->SUB, ast);
+        ast->node = ast->node->next;
+      } else if (strcmp(tok, "*") == 0) {
+        ast->node->next = newTokenNode(ast->system->MUL, ast);
+        ast->node = ast->node->next;
+      } else if (strcmp(tok, "/") == 0) {
+        ast->node->next = newTokenNode(ast->system->DIV, ast);
+        ast->node = ast->node->next;
+      } else if (strcmp(tok, "=") == 0) {
+        ast->node->next = newTokenNode(ast->system->EQ, ast);
+        ast->node = ast->node->next;
+      } else if (strcmp(tok, "<") == 0) {
+        ast->node->next = newTokenNode(ast->system->LT, ast);
+        ast->node = ast->node->next;
+      } else if (strcmp(tok, ">") == 0) {
+        ast->node->next = newTokenNode(ast->system->GT, ast);
+        ast->node = ast->node->next;
+      } else if (strcmp(tok, "<=") == 0) {
+        ast->node->next = newTokenNode(ast->system->LTEQ, ast);
+        ast->node = ast->node->next;
+      } else if (strcmp(tok, ">=") == 0) {
+        ast->node->next = newTokenNode(ast->system->GTEQ, ast);
+        ast->node = ast->node->next;
+      } else if (strcmp(tok, "print") == 0) {
+        ast->node->next = newTokenNode(ast->system->PRINT, ast);
+        ast->node = ast->node->next;
+      } else if (strcmp(tok, "read") == 0) {
+        ast->node->next = newTokenNode(ast->system->READ, ast);
+        ast->node = ast->node->next;
+      } else if (strcmp(tok, "throw") == 0) {
+        ast->node->next = newTokenNode(ast->system->EXCEPT, ast);
+        ast->node = ast->node->next;
       } else {
         ast->node->next = newTokenNode(ast->tokens->OBJECT, ast);
         ast->node = ast->node->next;
