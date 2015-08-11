@@ -23,14 +23,14 @@ int z_div(int a, int b) {
 }
 
 void z_println(t_object* o) {
-  switch(o->type->type) {
-    case 0:
+  switch(o->type) {
+    case 0xff01:
       printf("%d\n", o->value.i);
       return;
-    case 1:
+    case 0xff03:
       printf("%c\n", o->value.c);
       return;
-    case 2:
+    case 0xff04:
       printf("%s\n", o->value.s);
       return;
   }
@@ -45,28 +45,22 @@ t_object* newSystem(t_stack* stack, t_heap* heap) {
 }
 
 t_object* newInt(int v, t_stack* stack, t_heap* heap) {
-  t_fieldlist* fields = newFieldlist();
-  t_methodlist* methods = newMethodlist();
-  t_object* Int = newObject(methods, fields);
+  t_object* Int = newObject();
   Int->value = (union generic)v;
-  Int->type->type = 0;
+  Int->type = Type->Int;
   return Int;
 }
 
 t_object* newChar(char c, t_stack* stack, t_heap* heap) {
-  t_fieldlist* fields = newFieldlist();
-  t_methodlist* methods = newMethodlist();
-  t_object* Char = newObject(methods, fields);
+  t_object* Char = newObject();
   Char->value = (union generic)c;
-  Char->type->type = 1;
+  Char->type = Type->Char;
   return Char;
 }
 
 t_object* newString(char* s, t_stack* stack, t_heap* heap) {
-  t_fieldlist* fields = newFieldlist();
-  t_methodlist* methods = newMethodlist();
-  t_object* String = newObject(methods, fields);
+  t_object* String = newObject();
   String->value = (union generic)s;
-  String->type->type = 2;
+  String->type = Type->String;
   return String;
 }
