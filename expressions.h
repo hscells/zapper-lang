@@ -61,5 +61,10 @@ typedef struct {
 } t_expression;
 
 // union token initTokens();
-t_ast* parse (char* e, int index);
-union generic eval(t_expression *expression);
+t_ast* parse(char* e, int index);
+t_ast* newAst();
+struct node* newNode();
+struct node* newTokenNode(int token, t_ast* ast);
+struct node* newObjectNode(t_object* object, t_ast* ast);
+union generic eval(t_ast *ast);
+void collectAst(t_ast *ast);
