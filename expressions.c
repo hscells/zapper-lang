@@ -214,9 +214,8 @@ t_ast* parse(char* e, int index) {
         ast->node->next = newTokenNode(ast->system->EXCEPT, ast);
         ast->node = ast->node->next;
       } else {
-        ast->node->next = newTokenNode(ast->tokens->OBJECT, ast);
+        ast->node->next = newObjectNode(newObject(), ast);
         ast->node = ast->node->next;
-        ast->node->object = newObject();
       }
     }
   }
@@ -227,15 +226,34 @@ t_ast* parse(char* e, int index) {
   return ast;
 }
 
-union generic eval(t_expression *expression) {
+union generic eval(t_ast *ast) {
   union generic value;
   value.c = 0;
 
   // print each value of the linked list of nodes
-  struct node* node = expression->ast->node;
+  struct node* node = ast->node;
+  struct node* starting_node = node;
   while(node != NULL){
-    printf("%d\n", node->token);
+    if (node->token == ast->tokens->OBJECT) {
+      z_typeof(node->object);
+      printf("<");
+      z_print(node->object);
+      printf(">\n");
+      while (node->token != ast->tokens->RBRAC) {
+
+        if (node->next == NULL) {
+          printf("Mismatched parenthesis\n");
+          exit(2);
+        }
+
+        
+
+      }
+    } else {
+      printf("%d\n", node->token);
+    }
     node = node->next;
   }
+  ast->node = starting_node;
   return value;
 }
