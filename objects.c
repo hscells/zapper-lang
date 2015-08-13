@@ -67,3 +67,12 @@ t_stack* newStack() {
   t_stack* stack = (t_stack*) malloc(sizeof(t_stack));
   return stack;
 }
+
+t_symboltable* newSymbolTable() {
+  t_symboltable *s = (t_symboltable*) malloc(sizeof(t_symboltable));
+  return s;
+}
+
+void addSymbolToSymbolTable(t_symboltable symboltable, t_stack *stack, t_object *object) {
+
+}

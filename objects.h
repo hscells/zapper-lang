@@ -61,7 +61,7 @@ t_object* newObject();
 
 t_symboltable* newSymbolTable();
 
-void addSymbolToSymbolTable(t_symbol symbol, t_symboltable *symboltable, t_stack *stack, t_object *object);
+void addSymbolToSymbolTable(t_symboltable symboltable, t_stack *stack, t_object *object);
 
 t_heap* newHeap();
 t_stack* newStack();
