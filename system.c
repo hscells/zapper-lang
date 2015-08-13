@@ -21,19 +21,23 @@ int z_div(int a, int b) {
   return a / b;
 }
 
-void z_println(t_object* o) {
+void z_print(t_object* o) {
   switch(o->type) {
     case 0xff01:
-      printf("%d\n", o->value.i);
+      printf("%d", o->value.i);
       return;
     case 0xff03:
-      printf("%c\n", o->value.c);
+      printf("%c", o->value.c);
       return;
     case 0xff04:
-      printf("%s\n", o->value.s);
+      printf("%s", o->value.s);
       return;
   }
   z_exception("Could not print this object.",0,0);
+}
+
+void z_typeof(t_object* o) {
+  printf("%d", o->type);
 }
 
 void z_exit() {
