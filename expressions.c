@@ -74,9 +74,17 @@ struct node* newTokenNode(int token, t_ast* ast) {
 
 struct node* newObjectNode(t_object* object, t_ast* ast) {
   struct node* node = newNode();
-  node->token = ast->tokens->RBRAC;
+  node->token = ast->tokens->OBJECT;
   node->object = object;
   return node;
+}
+
+void collectAst(t_ast *ast) {
+  struct node* node = ast->node;
+  while(node != NULL) {
+    free(node);
+    node = node->next;
+  }
 }
 
 t_ast* parse(char* e, int index) {
