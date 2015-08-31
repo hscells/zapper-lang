@@ -3,6 +3,13 @@
 
 #include <stdlib.h>
 
+union generic {
+  int i;
+  char c;
+  char* s;
+  float f;
+};
+
 typedef struct {
   int Int;
   int Float;
@@ -10,13 +17,6 @@ typedef struct {
   int String;
   int List;
 } t_type;
-
-union generic {
-  int i;
-  char c;
-  char* s;
-  float f;
-};
 
 t_type* Type;
 
