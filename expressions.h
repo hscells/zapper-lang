@@ -48,12 +48,14 @@ struct node {
   t_object* object;
   struct node *next;
   struct node *prev; // prev actually isn't used
+  int line_num;
 };
 
 typedef struct {
   struct node *node;
   t_token* tokens;
   t_system* system;
+  int line_count;
 } t_ast;
 
 typedef struct {
@@ -61,7 +63,7 @@ typedef struct {
 } t_expression;
 
 // union token initTokens();
-t_ast* parse(char* e, int index);
+t_ast* parse(char* e, t_stack* stack, t_heap* heap, int index);
 t_ast* newAst();
 struct node* newNode();
 struct node* newTokenNode(int token, t_ast* ast);

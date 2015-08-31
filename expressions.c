@@ -1,9 +1,17 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <strings.h>
+#include <stdbool.h>
 #include "expressions.h"
 #include "system.h"
+#include "garbage.h"
 #include "types.h"
+
+#define EOL '\n'
+
+#define NUMBERS "1234567890"
+#define CHARACTERS "_abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+#define PRECISION "."
 
 int node_id = 0;
 
@@ -51,11 +59,11 @@ t_system* initSystem() {
 
 t_ast* newAst () {
   t_token* tokens = initTokens();
-  // printf("%d\n", tokens->START);
   t_system* system = initSystem();
   t_ast* ast = (t_ast*) malloc(sizeof(t_ast));
   ast->tokens = tokens;
   ast->system = system;
+  ast->node = newTokenNode(ast->tokens->START, ast);
   node_id++;
   return ast;
 }
@@ -87,17 +95,85 @@ void collectAst(t_ast *ast) {
   }
 }
 
-t_ast* parse(char* e, int index) {
+/**
+ * clean up a list structure
+ * @param l the list
+ */
+void collect_list(t_list* l) {
+  struct atom* node = l->atom;
+  while(node != NULL) {
+    free(node);
+    node = node->next;
+  }
+}
+
+/**
+ * given a char pointer, try to infer the type of the actual value
+ * @param  token the token being looked at
+ * @return       a type from types.h
+ */
+int inferType(char* token) {
+  bool contains_number = false;
+  bool contains_char = false;;
+  bool contains_precision = false;
+  char* c;
+
+  c = token;
+  while (*c) {
+    if (strchr(NUMBERS, *c)){
+      contains_number = true;
+    }
+    if (strchr(CHARACTERS, *c)) {
+      contains_char = true;
+    }
+    if (strchr(PRECISION, *c)) {
+      contains_precision = true;
+    }
+    c++;
+  }
+
+  if (contains_char && strlen(token) > 1) {
+    return Type->String;
+  } else if (contains_char && strlen(token) == 1) {
+    return Type->Char;
+  } else if (contains_number && !contains_precision && !contains_char) {
+    return Type->Int;
+  } else if (contains_number && contains_precision && !contains_char) {
+    return Type->Float;
+  }
+
+  // wtf do I do now?
+  return Type->Int;
+}
+
+t_ast* parse(char* e, t_stack* stack, t_heap* heap, int index) {
   int i;
   char c;
+  char cToStr[2];
+  int type;
   char tok[255];
   t_ast* ast = newAst();
   ast->node = newTokenNode(ast->tokens->START, ast);
   struct node* starting_node = ast->node;
 
   for(i = index; i < strlen(e) - 1; i++) {
+
     memset(tok,0,sizeof(tok));
     c = e[i];
+
+    // skip over comments
+    if (c == ';') {
+      while (c != EOL) {
+        i++;
+        c = e[i];
+      }
+    }
+
+    // maintain the line count
+    while (c == EOL) {
+      ast->line_count++;
+      c = e[++i];
+    }
 
     // add individual tokens to the ast
     if (c == '(') {
@@ -137,13 +213,18 @@ t_ast* parse(char* e, int index) {
     }
 
     // add tokens which are >1 character in length
-    while (c != '(' && i < strlen(e)) {
-      strcat(tok, &c);
+    while (c != '(' && c != ',' && c != ')' && i < strlen(e)) {
+      cToStr[0] = c;
+      strcat(tok, cToStr);
       i++;
       c = e[i];
     }
+
+    c = e[--i];
+
+    // printf ("tok is: %s, c is: %c\n", tok, c);
+
     if (strlen(tok) > 0) {
-      // printf("\ni:%d - %s (%lu)\n",i,tok,strlen(tok));
       if (strcmp(tok,"if") == 0) {
         ast->node->next = newTokenNode(ast->tokens->IF, ast);
         ast->node = ast->node->next;
@@ -214,7 +295,11 @@ t_ast* parse(char* e, int index) {
         ast->node->next = newTokenNode(ast->system->EXCEPT, ast);
         ast->node = ast->node->next;
       } else {
-        ast->node->next = newObjectNode(newObject(), ast);
+        // printf("this object is: %s\n", tok);
+        type = inferType(tok);
+        if (type == Type->Int) {
+          ast->node->next = newObjectNode(newInt(atoi(tok), stack, heap), ast);
+        }
         ast->node = ast->node->next;
       }
     }
@@ -229,28 +314,45 @@ t_ast* parse(char* e, int index) {
 union generic eval(t_ast *ast) {
   union generic value;
   value.c = 0;
+  t_list* params;
+  int paren_count = 0;
+
+  // bool inside_function_definition = false;
+  bool inside_actual_parameters = false;
+  int current_function;
 
   // print each value of the linked list of nodes
   struct node* node = ast->node;
   struct node* starting_node = node;
   while(node != NULL){
-    if (node->token == ast->tokens->OBJECT) {
-      z_typeof(node->object);
-      printf("<");
-      z_print(node->object);
-      printf(">\n");
-      while (node->token != ast->tokens->RBRAC) {
 
-        if (node->next == NULL) {
-          printf("Mismatched parenthesis\n");
-          exit(2);
+    // make sure there isn't a mismatched paren
+    // also keep track of the current list structure
+    if (node->token == ast->tokens->LBRAC) {
+      paren_count++;
+      params = z_list();
+    } else if (node->token == ast->tokens->RBRAC ) {
+      paren_count--;
+      if (paren_count == 0) {
+        if(current_function == ast->system->ADD) {
+          return (union generic) z_add(params->head->value->value.i, params->head->next->value->value.i);
         }
+      }
+      collect_list(params);
+      params = NULL;
+    }
 
-        
-
+    if (node->token == ast->tokens->OBJECT) {
+      if (inside_actual_parameters) {
+        z_conj(params, node->object);
       }
     } else {
-      printf("%d\n", node->token);
+      // printf("%d\n", node->token);
+      if (node->token <= ast->system->EXCEPT && node->token >= ast->system->ADD) {
+        current_function = node->token;
+        inside_actual_parameters = true;
+      }
+      // will need some other shit here to check if it's in the symbol table...
     }
     node = node->next;
   }
