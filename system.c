@@ -33,16 +33,72 @@ void z_print(t_object* o) {
       printf("%s", o->value.s);
       return;
   }
-  z_exception("Could not print this object.",0,0);
+  printf("<object> @ %d", o->id);
 }
 
-void z_typeof(t_object* o) {
-  printf("%d", o->type);
+void z_println(t_object* o) {
+  z_print(o);
+  printf("\n");
+}
+
+int z_typeof(t_object* o) {
+  return o->type;
 }
 
 void z_exit() {
   exit(1);
 }
+
+
+// below are list operations
+
+/**
+ * creates a new list
+ * @return a new list
+ */
+t_list* z_list() {
+  t_list* list = (t_list*) malloc(sizeof(t_list));
+  list->head = NULL;
+  return list;
+}
+
+/**
+ * (conj)-oin a list with another object
+ * @param list the list being conjoined onto
+ * @param o    the object which is being conjoined
+ */
+void z_conj(t_list* list, t_object* o) {
+  struct atom* atom = (struct atom*) malloc(sizeof(struct atom));
+  atom->value = o;
+  if (list->head == NULL) {
+    list->head = atom;
+    list->atom = atom;
+  } else {
+    list->atom->next = atom;
+  }
+}
+
+/**
+ * gets the first item from a list
+ * @param  list the list being looked at
+ * @return      the object at the very start of the list
+ */
+t_object* z_first(t_list* list) {
+  return list->head->value;
+}
+
+/**
+ * gets everything but the first element from a list
+ * @param  list the list being looked at
+ * @return      everything except the first item in the list
+ */
+t_list* z_rest(t_list* list) {
+  struct atom* atom = list->head->next;
+  t_list* new_list = z_list();
+  new_list->head = atom;
+  return new_list;
+}
+
 
 t_object* newSystem(t_stack* stack, t_heap* heap) {
   t_fieldlist* fields = newFieldlist();
