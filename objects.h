@@ -18,8 +18,7 @@ typedef struct {
 typedef struct {
   t_methodlist* methods;
   t_fieldlist* fields;
-  int type;
-  union generic value;
+  t_generic value;
   int id;
 } t_object;
 
@@ -28,10 +27,6 @@ struct symbol {
   t_object* object;
   int id;
 };
-
-typedef struct {
-  t_symbol symbols[1024];
-} t_symboltable;
 
 typedef struct {
   int index;
@@ -58,10 +53,6 @@ void addFieldToFieldlist(t_fieldlist* fieldlist, char* name, int type, t_object*
 void addMethodlistToObject(t_object* object, t_methodlist* methodlist);
 void addFieldlistToObject(t_object* object, t_fieldlist* fieldlist);
 t_object* newObject();
-
-t_symboltable* newSymbolTable();
-
-void addSymbolToSymbolTable(t_symboltable symboltable, t_stack *stack, t_object *object);
 
 t_heap* newHeap();
 t_stack* newStack();
