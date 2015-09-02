@@ -36,6 +36,7 @@ typedef struct {
   int LTEQ;
   int GTEQ;
   int PRINT;
+  int PRINTLN;
   int READ;
   int EXCEPT;
   int EXIT;
@@ -53,9 +54,11 @@ struct node {
 
 typedef struct {
   struct node *node;
+  struct node *head;
   t_token* tokens;
   t_system* system;
   int line_count;
+  t_stack* stack;
 } t_ast;
 
 typedef struct {
@@ -68,5 +71,5 @@ t_ast* newAst();
 struct node* newNode();
 struct node* newTokenNode(int token, t_ast* ast);
 struct node* newObjectNode(t_object* object, t_ast* ast);
-union generic eval(t_ast *ast);
+t_generic eval(t_ast *ast);
 void collectAst(t_ast *ast);
