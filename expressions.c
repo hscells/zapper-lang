@@ -42,18 +42,21 @@ t_token* initTokens() {
 
 t_system* initSystem() {
   t_system* system = (t_system*) malloc(sizeof(t_system));
-  system->ADD    = 0xa000;
-  system->SUB    = 0xa001;
-  system->MUL    = 0xa002;
-  system->DIV    = 0xa003;
-  system->EQ     = 0xa004;
-  system->LT     = 0xa005;
-  system->GT     = 0xa006;
-  system->LTEQ   = 0xa007;
-  system->GTEQ   = 0xa008;
-  system->PRINT  = 0xa009;
-  system->READ   = 0xa010;
-  system->EXCEPT = 0xa011;
+  system->ADD     = 0xa000;
+  system->SUB     = 0xa001;
+  system->MUL     = 0xa002;
+  system->DIV     = 0xa003;
+  system->EQ      = 0xa004;
+  system->LT      = 0xa005;
+  system->GT      = 0xa006;
+  system->LTEQ    = 0xa007;
+  system->GTEQ    = 0xa008;
+  system->PRINT   = 0xa009;
+  system->PRINTLN = 0xa012;
+  system->READ    = 0xa010;
+  system->EXCEPT  = 0xa011;
+  // TODO: Add these symbols to the symbol table for function lookup as 'native code'
+  // addFunctionToSymbolTable(symboltable, system->ADD, native_code, {Int, Int});
   return system;
 }
 
