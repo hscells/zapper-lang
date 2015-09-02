@@ -338,27 +338,64 @@ union generic eval(t_ast *ast) {
       paren_count--;
       if (paren_count == 0) {
         if(current_function == ast->system->ADD) {
-          return (union generic) z_add(params->head->value->value.i, params->head->next->value->value.i);
+          return z_add(params->head->value->value, params->head->next->value->value);
+        } else if(current_function == ast->system->SUB) {
+          return z_sub(params->head->value->value, params->head->next->value->value);
+        } else if(current_function == ast->system->MUL) {
+          return z_mul(params->head->value->value, params->head->next->value->value);
+        } else if(current_function == ast->system->DIV) {
+          return z_div(params->head->value->value, params->head->next->value->value);
+        } else if(current_function == ast->system->EQ) {
+          return z_eq(params->head->value, params->head->next->value);
+        } else if(current_function == ast->system->LT) {
+          return z_lt(params->head->value, params->head->next->value);
+        } else if(current_function == ast->system->GT) {
+          return z_gt(params->head->value, params->head->next->value);
+        } else if(current_function == ast->system->LTEQ) {
+          return z_lteq(params->head->value, params->head->next->value);
+        } else if(current_function == ast->system->GTEQ) {
+          return z_gteq(params->head->value, params->head->next->value);
+        } else if(current_function == ast->system->PRINT) {
+          z_print(params->head->value);
+        } else if(current_function == ast->system->PRINTLN) {
+          printf("hello\n");
+          z_println(params->head->value);
+        } else if(current_function == ast->system->READ) {
+          return z_read();
+        } else if(current_function == ast->system->EXIT) {
+          node->next = NULL;
         }
+        collect_list(params);
       }
-      collect_list(params);
-      params = NULL;
     }
 
     if (node->token == ast->tokens->OBJECT) {
+      printf("next token: %d\n", node->next->token);
       if (inside_actual_parameters) {
+        // t_object* param_obj;
+        // // need to check if the object is in the functions symbol table
+        // if (node->next->token == ast->tokens->LBRAC) {
+        //   // printf("going to recurse into this function\n");
+        //   // t_ast* recur_ast = newAst();
+        //   // param_obj = newObject();
+        //   // recur_ast->head = node;
+        //   // value = eval(recur_ast);
+        //   // param_obj->value = value;
+        //   // while (node->next != NULL && node->next->token != ast->tokens->RBRAC);
+        //   param_obj = node->object;
+        // } else {
+        //   param_obj = node->object;
+        // }
         z_conj(params, node->object);
-      }
-    } else {
-      // printf("%d\n", node->token);
-      if (node->token <= ast->system->EXCEPT && node->token >= ast->system->ADD) {
+      } else {
         current_function = node->token;
-        inside_actual_parameters = true;
       }
-      // will need some other shit here to check if it's in the symbol table...
+
     }
     node = node->next;
   }
   ast->node = starting_node;
+  printf("done eval!\n");
+  collectAst(ast);
   return value;
 }
