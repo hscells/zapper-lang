@@ -2,24 +2,21 @@
 #define __TYPES_H
 
 #include <stdlib.h>
+#include <stdbool.h>
 
-union generic {
-  int i;
-  char c;
+enum t_type { Int, Float, Char, String, Bool, List};
+
+typedef union {
+  int   i;
+  char  c;
   char* s;
   float f;
-};
+  bool  b;
+} t_generic_value;
 
 typedef struct {
-  int Int;
-  int Float;
-  int Char;
-  int String;
-  int List;
-} t_type;
+  t_generic_value value;
+  enum t_type type;
+} t_generic;
 
-t_type* Type;
-
-int getType(int type);
-void initTypes();
 #endif
