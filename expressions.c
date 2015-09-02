@@ -64,9 +64,11 @@ t_ast* newAst () {
   t_token* tokens = initTokens();
   t_system* system = initSystem();
   t_ast* ast = (t_ast*) malloc(sizeof(t_ast));
+  ast->line_count = 1;
   ast->tokens = tokens;
   ast->system = system;
   ast->node = newTokenNode(ast->tokens->START, ast);
+  ast->head = ast->node;
   node_id++;
   return ast;
 }
@@ -103,10 +105,11 @@ void collectAst(t_ast *ast) {
  * @param l the list
  */
 void collect_list(t_list* l) {
-  struct atom* node = l->atom;
-  while(node != NULL) {
-    free(node);
-    node = node->next;
+  struct atom* curr = l->head;
+  struct atom* head = l->head;
+  while((curr = head) != NULL) {
+    head = head->next;
+    free(curr);
   }
 }
 
@@ -136,17 +139,17 @@ int inferType(char* token) {
   }
 
   if (contains_char && strlen(token) > 1) {
-    return Type->String;
+    return String;
   } else if (contains_char && strlen(token) == 1) {
-    return Type->Char;
+    return Char;
   } else if (contains_number && !contains_precision && !contains_char) {
-    return Type->Int;
+    return Int;
   } else if (contains_number && contains_precision && !contains_char) {
-    return Type->Float;
+    return Float;
   }
 
   // wtf do I do now?
-  return Type->Int;
+  return -1;
 }
 
 t_ast* parse(char* e, t_stack* stack, t_heap* heap, int index) {
@@ -177,6 +180,8 @@ t_ast* parse(char* e, t_stack* stack, t_heap* heap, int index) {
       ast->line_count++;
       c = e[++i];
     }
+
+    ast->node->line_num = ast->line_count;
 
     // add individual tokens to the ast
     if (c == '(') {
@@ -291,6 +296,9 @@ t_ast* parse(char* e, t_stack* stack, t_heap* heap, int index) {
       } else if (strcmp(tok, "print") == 0) {
         ast->node->next = newTokenNode(ast->system->PRINT, ast);
         ast->node = ast->node->next;
+      } else if (strcmp(tok, "println") == 0) {
+        ast->node->next = newTokenNode(ast->system->PRINTLN, ast);
+        ast->node = ast->node->next;
       } else if (strcmp(tok, "read") == 0) {
         ast->node->next = newTokenNode(ast->system->READ, ast);
         ast->node = ast->node->next;
@@ -298,10 +306,14 @@ t_ast* parse(char* e, t_stack* stack, t_heap* heap, int index) {
         ast->node->next = newTokenNode(ast->system->EXCEPT, ast);
         ast->node = ast->node->next;
       } else {
-        // printf("this object is: %s\n", tok);
         type = inferType(tok);
-        if (type == Type->Int) {
-          ast->node->next = newObjectNode(newInt(atoi(tok), stack, heap), ast);
+        printf("this object is of type <%d>: %s\n", type, tok);
+        switch(type) {
+          case -1:
+            exception("Could not determine the type of this object", ast->node->line_num, tok);
+          case Int:
+            ast->node->next = newObjectNode(newInt(atoi(tok), stack, heap), ast);
+            break;
         }
         ast->node = ast->node->next;
       }
@@ -314,9 +326,8 @@ t_ast* parse(char* e, t_stack* stack, t_heap* heap, int index) {
   return ast;
 }
 
-union generic eval(t_ast *ast) {
-  union generic value;
-  value.c = 0;
+t_generic eval(t_ast *ast) {
+  t_generic value;
   t_list* params;
   int paren_count = 0;
 
@@ -327,8 +338,9 @@ union generic eval(t_ast *ast) {
   // print each value of the linked list of nodes
   struct node* node = ast->node;
   struct node* starting_node = node;
-  while(node != NULL){
 
+  while(node != NULL){
+    printf("%d\n", node->token);
     // make sure there isn't a mismatched paren
     // also keep track of the current list structure
     if (node->token == ast->tokens->LBRAC) {
