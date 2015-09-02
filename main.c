@@ -11,21 +11,23 @@
 int EXIT_STATUS = 0;
 
 void repl_init();
+
 t_symboltable *symboltable;
+struct node *native_code;
 
 int main(int argc, char const *argv[]) {
 
   // first couple of lines initialise the system itself:
 
-  // initiate the type system
-  initTypes();
   // create a heap for the vm to run
   t_heap* heap = newHeap();
   // create a stack on the heap for the main class
   t_stack* mainStack = newStack();
-  symboltable = newSymbolTable();
+  symboltable = newSymbolTable(mainStack);
 
   t_ast* ast = newAst();
+
+  native_code = malloc(sizeof(struct node));
 
   // these next lines are used to read a file in for evaluation
 
@@ -83,11 +85,8 @@ int main(int argc, char const *argv[]) {
   }
 
   // garbage function but resides in expressions
-  collectAst(ast);
-
   free(heap);
   free(mainStack);
-  free(Type);
 
   return 0;
 }
