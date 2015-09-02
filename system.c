@@ -1,37 +1,62 @@
 #include "system.h"
+#include <string.h>
 
-void z_exception(char* e, int l, int c) {
-  printf("Line: %d, Position: %d\n%s\n", l, c, e);
+void exception(char* e, int line_number, char* token) {
+  printf("An Exception was raised on line: %d, near: '%s'\n\t%s\n", line_number, token, e);
   exit(2);
 }
 
-int z_add(int a, int b) {
-  return a + b;
+void z_exception(char* e) {
+  printf("An Exception was raised on line: %d, near: '%s'\n\t%s\n", LINE_NUMBER, CURRENT_TOKEN, e);
+  exit(2);
 }
 
-int z_sub(int a, int b) {
-  return a - b;
+t_generic z_add(t_generic a, t_generic b) {
+  t_generic result;
+  result.value = (t_generic_value) (a.value.i + b.value.i);
+  result.type = Int;
+  return result;
 }
 
-int z_mul(int a, int b) {
-  return a * b;
+t_generic z_sub(t_generic a, t_generic b) {
+  t_generic result;
+  result.value = (t_generic_value) (a.value.i - b.value.i);
+  result.type = Int;
+  return result;
 }
 
-int z_div(int a, int b) {
-  return a / b;
+t_generic z_mul(t_generic a, t_generic b) {
+  t_generic result;
+  result.value = (t_generic_value) (a.value.i * b.value.i);
+  result.type = Int;
+  return result;
+}
+
+t_generic z_div(t_generic a, t_generic b) {
+  t_generic result;
+  result.value = (t_generic_value) (a.value.i / b.value.i);
+  result.type = Int;
+  return result;
 }
 
 void z_print(t_object* o) {
-  switch(o->type) {
-    case 0xff01:
-      printf("%d", o->value.i);
+  switch(o->value.type) {
+    case Int:
+      printf("%d", o->value.value.i);
       return;
-    case 0xff03:
-      printf("%c", o->value.c);
+    case Float:
+      printf("%f", o->value.value.f);
       return;
-    case 0xff04:
-      printf("%s", o->value.s);
+    case Char:
+      printf("%c", o->value.value.c);
       return;
+    case String:
+      printf("%s", o->value.value.s);
+      return;
+    case Bool:
+      break;
+    case List:
+      break;
   }
   printf("<object> @ %d", o->id);
 }
@@ -41,14 +66,147 @@ void z_println(t_object* o) {
   printf("\n");
 }
 
-int z_typeof(t_object* o) {
-  return o->type;
+enum t_type z_typeof(t_object* o) {
+  return o->value.type;
+}
+
+t_generic z_teq(t_object* a, t_object* b) {
+  t_generic result;
+  result.type = Bool;
+  result.value = (t_generic_value) (z_typeof(a) == z_typeof(b));
+  return result;
+}
+
+t_generic z_eq(t_object* a, t_object* b) {
+  t_generic result;
+  result.type = Bool;
+  result.value = (t_generic_value) false;
+  switch(a->value.type) {
+    case Int:
+      result.value = (t_generic_value) (a->value.value.i == b->value.value.i);
+      break;
+    case Float:
+      result.value = (t_generic_value) (a->value.value.f == b->value.value.f);
+      break;
+    case Char:
+      result.value = (t_generic_value) (a->value.value.c == b->value.value.c);
+      break;
+    case String:
+      result.value = (t_generic_value) (strcmp(a->value.value.s,b->value.value.s) == 0);
+      break;
+    case Bool:
+      break;
+    case List:
+      break;
+  }
+  return result;
+}
+t_generic z_lt(t_object* a, t_object* b) {
+  t_generic result;
+  result.type = Bool;
+  result.value = (t_generic_value) false;
+  switch(a->value.type) {
+    case Int:
+      result.value = (t_generic_value) (a->value.value.i < b->value.value.i);
+      break;
+    case Float:
+      result.value = (t_generic_value) (a->value.value.f < b->value.value.f);
+      break;
+    case Char:
+      result.value = (t_generic_value) (a->value.value.c < b->value.value.c);
+      break;
+    case String:
+      result.value = (t_generic_value) (strcmp(a->value.value.s,b->value.value.s) < 0);
+      break;
+    case Bool:
+      break;
+    case List:
+      break;
+  }
+  return result;
+}
+t_generic z_gt(t_object* a, t_object* b) {
+  t_generic result;
+  result.type = Bool;
+  result.value = (t_generic_value) false;
+  switch(a->value.type) {
+    case Int:
+      result.value = (t_generic_value) (a->value.value.i > b->value.value.i);
+      break;
+    case Float:
+      result.value = (t_generic_value) (a->value.value.f > b->value.value.f);
+      break;
+    case Char:
+      result.value = (t_generic_value) (a->value.value.c > b->value.value.c);
+      break;
+    case String:
+      result.value = (t_generic_value) (strcmp(a->value.value.s,b->value.value.s) > 0);
+      break;
+    case Bool:
+      break;
+    case List:
+      break;
+  }
+  return result;
+}
+t_generic z_lteq(t_object* a, t_object* b) {
+  t_generic result;
+  result.type = Bool;
+  result.value = (t_generic_value) false;
+  switch(a->value.type) {
+    case Int:
+      result.value = (t_generic_value) (a->value.value.i <= b->value.value.i);
+      break;
+    case Float:
+      result.value = (t_generic_value) (a->value.value.f <= b->value.value.f);
+      break;
+    case Char:
+      result.value = (t_generic_value) (a->value.value.c <= b->value.value.c);
+      break;
+    case String:
+      result.value = (t_generic_value) (strcmp(a->value.value.s,b->value.value.s) <= 0);
+      break;
+    case Bool:
+      break;
+    case List:
+      break;
+  }
+  return result;
+}
+
+t_generic z_gteq(t_object* a, t_object* b){
+  t_generic result;
+  result.type = Bool;
+  result.value = (t_generic_value) false;
+  switch(a->value.type) {
+    case Int:
+      result.value = (t_generic_value) (a->value.value.i >= b->value.value.i);
+      break;
+    case Float:
+      result.value = (t_generic_value) (a->value.value.f >= b->value.value.f);
+      break;
+    case Char:
+      result.value = (t_generic_value) (a->value.value.c >= b->value.value.c);
+      break;
+    case String:
+      result.value = (t_generic_value) (strcmp(a->value.value.s,b->value.value.s) >= 0);
+      break;
+    case Bool:
+      break;
+    case List:
+      break;
+  }
+  return result;
 }
 
 void z_exit() {
   exit(1);
 }
 
+t_generic z_read() {
+  t_generic result;
+  return result;
+}
 
 // below are list operations
 
@@ -109,21 +267,34 @@ t_object* newSystem(t_stack* stack, t_heap* heap) {
 
 t_object* newInt(int v, t_stack* stack, t_heap* heap) {
   t_object* Int = newObject();
-  Int->value = (union generic)v;
-  Int->type = Type->Int;
+  Int->value.value = (t_generic_value) v;
+  Int->value.type = (enum t_type) Int;
   return Int;
 }
 
 t_object* newChar(char c, t_stack* stack, t_heap* heap) {
   t_object* Char = newObject();
-  Char->value = (union generic)c;
-  Char->type = Type->Char;
+  Char->value.value = (t_generic_value) c;
+  Char->value.type = (enum t_type) Char;
   return Char;
 }
 
 t_object* newString(char* s, t_stack* stack, t_heap* heap) {
   t_object* String = newObject();
-  String->value = (union generic)s;
-  String->type = Type->String;
+  String->value.value = (t_generic_value) s;
+  String->value.type = (enum t_type) String;
   return String;
+}
+
+t_symboltable* newSymbolTable(t_stack* stack) {
+  t_symboltable *s = (t_symboltable*) malloc(sizeof(t_symboltable));
+  s->stack = stack;
+  return s;
+}
+
+void addFunctionToSymbolTable(t_symboltable* symboltable, int id, struct node *node, enum t_type* formal_parameters[]) {
+  t_symboltable_row* row = (t_symboltable_row*) malloc(sizeof(t_symboltable_row));
+  row->id = id;
+  row->node = node;
+  symboltable->row[symboltable->current++] = row;
 }
