@@ -12,6 +12,11 @@
 #define NUMBERS "1234567890"
 #define CHARACTERS "_abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 #define PRECISION "."
+#define CHAR_DELIM "'"
+#define STRG_DELIM "\""
+
+#define MIN_BUILTIN 0xa000
+#define MAX_BUILTIN 0xa012
 
 int node_id = 0;
 
@@ -55,8 +60,6 @@ t_system* initSystem() {
   system->PRINTLN = 0xa012;
   system->READ    = 0xa010;
   system->EXCEPT  = 0xa011;
-  // TODO: Add these symbols to the symbol table for function lookup as 'native code'
-  // addFunctionToSymbolTable(symboltable, system->ADD, native_code, {Int, Int});
   return system;
 }
 
@@ -92,12 +95,15 @@ struct node* newObjectNode(t_object* object, t_ast* ast) {
   return node;
 }
 
-void collectAst(t_ast *ast) {
-  struct node* node = ast->node;
-  while(node != NULL) {
-    free(node);
-    node = node->next;
+void collect_ast(t_ast *ast) {
+  struct node* curr;
+  struct node* head = ast->head;
+  printf("about to free ast\n");
+  while((curr = head) != NULL) {
+    head = head->next;
+    free(curr);
   }
+  free(ast);
 }
 
 /**
@@ -308,11 +314,29 @@ t_ast* parse(char* e, t_stack* stack, t_heap* heap, int index) {
       } else {
         type = inferType(tok);
         printf("this object is of type <%d>: %s\n", type, tok);
+        t_object* obj = newObject();
         switch(type) {
           case -1:
             exception("Could not determine the type of this object", ast->node->line_num, tok);
           case Int:
-            ast->node->next = newObjectNode(newInt(atoi(tok), stack, heap), ast);
+            obj->value.value = (t_generic_value) atoi(tok);
+            obj->value.type = Int;
+            ast->node->next = newObjectNode(obj, ast);
+            break;
+          case Char:
+            obj->value.value = (t_generic_value) tok[0];
+            obj->value.type = Char;
+            ast->node->next = newObjectNode(obj, ast);
+            break;
+          case Float:
+            obj->value.value = (t_generic_value) atof(tok);
+            obj->value.type = Char;
+            ast->node->next = newObjectNode(obj, ast);
+            break;
+          case String:
+            obj->value.value = (t_generic_value) tok;
+            obj->value.type = String;
+            ast->node->next = newObjectNode(obj, ast);
             break;
         }
         ast->node = ast->node->next;
@@ -333,24 +357,33 @@ t_generic eval(t_ast *ast) {
 
   // bool inside_function_definition = false;
   bool inside_actual_parameters = false;
-  int current_function;
+  int current_function = 0;
 
   // print each value of the linked list of nodes
   struct node* node = ast->node;
-  struct node* starting_node = node;
 
+  printf("starting eval at %d\n", ast->node->token);
   while(node != NULL){
-    printf("%d\n", node->token);
+    printf("token : %d\n", node->token);
+    // printf("%d\n", node->token);
     // make sure there isn't a mismatched paren
     // also keep track of the current list structure
     if (node->token == ast->tokens->LBRAC) {
       paren_count++;
-      params = z_list();
+      printf("add paren count: %d\n", paren_count);
+      if (current_function > 0) {
+        params = z_list();
+        inside_actual_parameters = true;
+      }
+
     } else if (node->token == ast->tokens->RBRAC ) {
       paren_count--;
+      printf("take paren count: %d\n", paren_count);
       if (paren_count == 0) {
         if(current_function == ast->system->ADD) {
-          return z_add(params->head->value->value, params->head->next->value->value);
+          t_generic r = z_add(params->head->value->value, params->head->next->value->value);
+          printf("the type is of %d\n", r.type);
+          return r;
         } else if(current_function == ast->system->SUB) {
           return z_sub(params->head->value->value, params->head->next->value->value);
         } else if(current_function == ast->system->MUL) {
@@ -369,35 +402,40 @@ t_generic eval(t_ast *ast) {
           return z_gteq(params->head->value, params->head->next->value);
         } else if(current_function == ast->system->PRINT) {
           z_print(params->head->value);
+          break;
         } else if(current_function == ast->system->PRINTLN) {
-          printf("hello\n");
+          printf("type of object: %d\n", params->head->value->value.type);
           z_println(params->head->value);
+          break;
         } else if(current_function == ast->system->READ) {
           return z_read();
         } else if(current_function == ast->system->EXIT) {
           node->next = NULL;
         }
         collect_list(params);
+        current_function = 0;
       }
     }
 
-    if (node->token == ast->tokens->OBJECT) {
-      printf("next token: %d\n", node->next->token);
+    if (node->token <= MAX_BUILTIN && node->token >= MIN_BUILTIN) {
       if (inside_actual_parameters) {
-        // t_object* param_obj;
-        // // need to check if the object is in the functions symbol table
-        // if (node->next->token == ast->tokens->LBRAC) {
-        //   // printf("going to recurse into this function\n");
-        //   // t_ast* recur_ast = newAst();
-        //   // param_obj = newObject();
-        //   // recur_ast->head = node;
-        //   // value = eval(recur_ast);
-        //   // param_obj->value = value;
-        //   // while (node->next != NULL && node->next->token != ast->tokens->RBRAC);
-        //   param_obj = node->object;
-        // } else {
-        //   param_obj = node->object;
-        // }
+        t_object* param = newObject();
+        t_ast* newast = newAst();
+        newast->head = node;
+        newast->node = node;
+        param->value = eval(newast);
+        z_conj(params, param);
+        while (node->token != ast->tokens->RBRAC) {
+          node = node->next;
+        }
+        printf("The finished node is %d\n", node->token);
+      } else {
+        current_function = node->token;
+      }
+    } else if (node->token == ast->tokens->OBJECT && node->object->value.type == Function) {
+      //do something with the symbol table!
+    } else if (node->token == ast->tokens->OBJECT) {
+      if (inside_actual_parameters) {
         z_conj(params, node->object);
       } else {
         current_function = node->token;
@@ -406,8 +444,6 @@ t_generic eval(t_ast *ast) {
     }
     node = node->next;
   }
-  ast->node = starting_node;
-  printf("done eval!\n");
-  collectAst(ast);
+  printf("finished eval at %d\n", node->token);
   return value;
 }
