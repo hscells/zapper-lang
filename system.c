@@ -370,10 +370,10 @@ t_list* z_rest(t_list* list) {
 
 int z_length(t_list* list) {
   int length = 0;
-  struct atom* curr = list->head;
-  while(curr != NULL) {
+  list->atom = list->head;
+  while(list->atom != NULL) {
     length++;
-    curr = list->atom->next;
+    list->atom = list->atom->next;
   }
   return length;
 }
