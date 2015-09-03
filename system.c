@@ -368,6 +368,16 @@ t_list* z_rest(t_list* list) {
   return new_list;
 }
 
+int z_length(t_list* list) {
+  int length = 0;
+  struct atom* curr = list->head;
+  while(curr != NULL) {
+    length++;
+    curr = list->atom->next;
+  }
+  return length;
+}
+
 t_generic z_eval(char* expressions, t_stack* stack, t_heap* heap) {
   t_ast* ast = newAst();
   ast = parse(expressions, stack, heap, 0);

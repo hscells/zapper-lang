@@ -387,31 +387,75 @@ t_generic eval(t_ast *ast) {
       printf("take paren count: %d\n", paren_count);
       if (paren_count == 0) {
         if (current_function == 0) {
+          // the evaluating thing must be atomic
           return value;
-        } else if(current_function == ast->system->ADD) {
-          return z_add(params->head->value->value, params->head->next->value->value);
+        } else if(current_function == ast->system->ADD) { // otherwise evaluate a builtin
+          if (z_length(params) == 2) {
+            return z_add(params->head->value->value, params->head->next->value->value);
+          } else {
+            exception("Wrong number of arguments, function expects 2", node->line_num, "+");
+          }
         } else if(current_function == ast->system->SUB) {
-          return z_sub(params->head->value->value, params->head->next->value->value);
+          if (z_length(params) == 2) {
+            return z_sub(params->head->value->value, params->head->next->value->value);
+          } else {
+            exception("Wrong number of arguments, function expects 2", node->line_num, "-");
+          }
         } else if(current_function == ast->system->MUL) {
-          return z_mul(params->head->value->value, params->head->next->value->value);
+          if (z_length(params) == 2) {
+            return z_mul(params->head->value->value, params->head->next->value->value);
+          } else {
+            exception("Wrong number of arguments, function expects 2", node->line_num, "*");
+          }
         } else if(current_function == ast->system->DIV) {
-          return z_div(params->head->value->value, params->head->next->value->value);
+          if (z_length(params) == 2) {
+            return z_div(params->head->value->value, params->head->next->value->value);
+          } else {
+            exception("Wrong number of arguments, function expects 2", node->line_num, "/");
+          }
         } else if(current_function == ast->system->EQ) {
-          return z_eq(params->head->value, params->head->next->value);
+          if (z_length(params) == 2) {
+            return z_eq(params->head->value, params->head->next->value);
+          } else {
+            exception("Wrong number of arguments, function expects 2", node->line_num, "=");
+          }
         } else if(current_function == ast->system->LT) {
-          return z_lt(params->head->value, params->head->next->value);
+          if (z_length(params) == 2) {
+            return z_lt(params->head->value, params->head->next->value);
+          } else {
+            exception("Wrong number of arguments, function expects 2", node->line_num, "<");
+          }
         } else if(current_function == ast->system->GT) {
-          return z_gt(params->head->value, params->head->next->value);
+          if (z_length(params) == 2) {
+            return z_gt(params->head->value, params->head->next->value);
+          } else {
+            exception("Wrong number of arguments, function expects 2", node->line_num, ">");
+          }
         } else if(current_function == ast->system->LTEQ) {
-          return z_lteq(params->head->value, params->head->next->value);
+          if (z_length(params) == 2) {
+            return z_lteq(params->head->value, params->head->next->value);
+          } else {
+            exception("Wrong number of arguments, function expects 2", node->line_num, "<=");
+          }
         } else if(current_function == ast->system->GTEQ) {
-          return z_gteq(params->head->value, params->head->next->value);
+          if (z_length(params) == 2) {
+            return z_gteq(params->head->value, params->head->next->value);
+          } else {
+            exception("Wrong number of arguments, function expects 2", node->line_num, ">=");
+          }
         } else if(current_function == ast->system->PRINT) {
-          z_print(params->head->value);
+          if (z_length(params) == 1) {
+            z_print(params->head->value);
+          } else {
+            exception("Wrong number of arguments, function expects 1", node->line_num, "print");
+          }
           break;
         } else if(current_function == ast->system->PRINTLN) {
-          printf("type of object: %d\n", params->head->value->value.type);
-          z_println(params->head->value);
+          if (z_length(params) == 1) {
+            z_println(params->head->value);
+          } else {
+            exception("Wrong number of arguments, function expects 1", node->line_num, "println");
+          }
           break;
         } else if(current_function == ast->system->READ) {
           return z_read();
