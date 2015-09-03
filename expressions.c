@@ -60,6 +60,12 @@ t_system* initSystem() {
   system->PRINTLN = 0xa012;
   system->READ    = 0xa010;
   system->EXCEPT  = 0xa011;
+
+  system->LIST    = 0xa013;
+  system->CONJ    = 0xa014;
+  system->FIRST   = 0xa015;
+  system->REST    = 0xa016;
+  system->LENGTH  = 0xa017;
   return system;
 }
 
@@ -189,7 +195,6 @@ t_ast* parse(char* e, t_stack* stack, t_heap* heap, int index) {
     // who the heck cares about spaces!?
     while (c == ' ' || c == '\t'){
       c = e[++i];
-      printf("space: %c\n", c);
     }
 
 
@@ -233,7 +238,7 @@ t_ast* parse(char* e, t_stack* stack, t_heap* heap, int index) {
     }
 
     // add tokens which are >1 character in length
-    while (c != '(' && c != ',' && c != ')' && i < strlen(e)) {
+    while (c != '(' && c != ',' && c != ')' && c != '{' && c != '}' && i < strlen(e)) {
       cToStr[0] = c;
       strcat(tok, cToStr);
       i++;
@@ -319,7 +324,7 @@ t_ast* parse(char* e, t_stack* stack, t_heap* heap, int index) {
         ast->node = ast->node->next;
       } else {
         type = inferType(tok);
-        printf("this object is of type <%d>: %s\n", type, tok);
+        // printf("this object is of type <%d>: %s\n", type, tok);
         t_object* obj = newObject();
         switch(type) {
           case -1:
@@ -368,7 +373,8 @@ t_generic eval(t_ast *ast) {
   // print each value of the linked list of nodes
   struct node* node = ast->head;
 
-  printf("starting eval at %d\n", ast->node->token);
+  node = ast->head;
+  printf("new eval stack\n");
   while(node != NULL){
     printf("token : %d\n", node->token);
     // printf("%d\n", node->token);
@@ -376,7 +382,6 @@ t_generic eval(t_ast *ast) {
     // also keep track of the current list structure
     if (node->token == ast->tokens->LBRAC) {
       paren_count++;
-      printf("add paren count: %d\n", paren_count);
       if (current_function > 0) {
         params = z_list();
         inside_actual_parameters = true;
@@ -384,11 +389,9 @@ t_generic eval(t_ast *ast) {
 
     } else if (node->token == ast->tokens->RBRAC ) {
       paren_count--;
-      printf("take paren count: %d\n", paren_count);
       if (paren_count == 0) {
         if (current_function == 0) {
-          // the evaluating thing must be atomic
-          return value;
+
         } else if(current_function == ast->system->ADD) { // otherwise evaluate a builtin
           if (z_length(params) == 2) {
             return z_add(params->head->value->value, params->head->next->value->value);
@@ -446,17 +449,17 @@ t_generic eval(t_ast *ast) {
         } else if(current_function == ast->system->PRINT) {
           if (z_length(params) == 1) {
             z_print(params->head->value);
+            return value;
           } else {
             exception("Wrong number of arguments, function expects 1", node->line_num, "print");
           }
-          break;
         } else if(current_function == ast->system->PRINTLN) {
           if (z_length(params) == 1) {
             z_println(params->head->value);
+            return value;
           } else {
             exception("Wrong number of arguments, function expects 1", node->line_num, "println");
           }
-          break;
         } else if(current_function == ast->system->READ) {
           return z_read();
         } else if(current_function == ast->system->EXIT) {
@@ -464,38 +467,107 @@ t_generic eval(t_ast *ast) {
         } else {
           exception("Could not evaluate function.", node->line_num, "<Function Object>");
         }
-        collect_list(params);
+
         current_function = 0;
       }
     }
 
+    // if we see a left curl, stop evaluating, if we see a right curl, also stop evaluating
+    // stop on a left because we need something to separate the execution
+    // stop on a right because we need to stop execution
+    // braces act as an expression body
+    if (node->token == ast->tokens->LCURL || node->token == ast->tokens->RCURL){
+      return value;
+    }
+
+    /**
+     * Logic for an if expression
+     * An if function takes the following parameters:
+     * if(predicate_function {true expression body} {false expression body})
+     */
+    if (node->next != NULL && node->token == ast->tokens->IF) {
+      t_ast* newast = newAst();
+      newast->head = node->next;
+      t_generic result = eval(newast);
+      while (node->token != ast->tokens->RBRAC) {
+        node = node->next;
+      }
+      if (result.value.b == true) {
+        // we know the predicate evaluated to true, so skip to that node
+        while (node->token != ast->tokens->LCURL) {
+          node = node->next;
+        }
+        node = node->next;
+        // evaluate everything inside that expression body
+        newast->head = node;
+        value = eval(newast);
+        // now skip right to the end of the if body
+        while (node->token != ast->tokens->RCURL) {
+          node = node->next;
+        }
+        while (node->token != ast->tokens->RCURL) {
+          node = node->next;
+        }
+        while (node->token != ast->tokens->RBRAC) {
+          node = node->next;
+        }
+        node = node->next->next;
+      } else {
+        // the predicate evaluated to false, so skip to the second expression body
+        while (node->token != ast->tokens->RCURL) {
+          node = node->next;
+        }
+        node = node->next->next;
+        // evaluate the second expression body
+        newast->head = node;
+        value = eval(newast);
+        // skip to the end of the if body
+        while (node->token != ast->tokens->RCURL) {
+          node = node->next;
+        }
+        while (node->token != ast->tokens->RBRAC) {
+          node = node->next;
+        }
+      }
+    }
+
     if (node->token <= MAX_BUILTIN && node->token >= MIN_BUILTIN) {
+      current_function = node->token;
+    }
+
+    if (node->next != NULL && node->next->token <= MAX_BUILTIN && node->next->token >= MIN_BUILTIN) {
       if (inside_actual_parameters) {
+        // this will evaluate parameters if they are functions
+        // parameters are evaludated and reduced before being passed to the calling function
         t_object* param = newObject();
         t_ast* newast = newAst();
-        newast->head = node;
-        newast->node = node;
+        newast->head = node->next;
         param->value = eval(newast);
         z_conj(params, param);
         while (node->token != ast->tokens->RBRAC) {
           node = node->next;
         }
-        printf("The finished node is %d\n", node->token);
       } else {
-        current_function = node->token;
+        // this will evaluate a builtin function and record it's value
+        t_ast* newast = newAst();
+        newast->head = node->next;
+        value = eval(newast);
+        while (node->next->token != ast->tokens->RBRAC) {
+          node = node->next;
+        }
+        current_function = 0;
       }
     } else if (node->token == ast->tokens->OBJECT && node->object->value.type == Function) {
       //do something with the symbol table!
     } else if (node->token == ast->tokens->OBJECT) {
+      // we know that this must be just a plain old object now
       if (inside_actual_parameters) {
+        // if the ast is inside a parameter list, add the object to that list
         z_conj(params, node->object);
-      } else {
-        current_function = node->token;
       }
-
     }
+
     node = node->next;
   }
-  printf("finished eval at %d\n", node->token);
   return value;
 }
