@@ -398,7 +398,7 @@ t_symboltable* newSymbolTable(t_stack* stack) {
   return s;
 }
 
-void addFunctionToSymbolTable(t_symboltable* symboltable, int id, struct node *node, enum t_type formal_parameters[]) {
+void addFunctionToSymbolTable(t_symboltable* symboltable, int id, struct node *node, t_list* formal_parameters) {
   t_symboltable_row* row = (t_symboltable_row*) malloc(sizeof(t_symboltable_row));
   row->id = id;
   row->node = node;

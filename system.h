@@ -60,4 +60,4 @@ t_list* z_rest(t_list* list);
 int z_length(t_list* list);
 
 t_symboltable* newSymbolTable(t_stack* stack);
-void addFunctionToSymbolTable(t_symboltable* symboltable, int id, struct node *node, enum t_type formal_parameters[]);
+void addFunctionToSymbolTable(t_symboltable* symboltable, int id, struct node *node, t_list* formal_parameters);
