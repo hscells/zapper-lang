@@ -366,6 +366,8 @@ bool nodeIsFunction(struct node* node, t_ast* ast){
     return true;
   } else if (node->token == ast->tokens->IF){
     return true;
+  } else if (node->token == ast->tokens->RETURN){
+    return true;
   } else if (node->object != NULL && node->object->value.type == Function) {
     return true;
   }
@@ -498,17 +500,26 @@ t_generic eval(t_ast *ast) {
     }
 
     /**
+     * Logic for a function definition
+     * A fn is defined as follows:
+     * fn(function_name,list(int(a),float(b)),{expressions})
+     */
+    if (node->token == ast->tokens->FN) {
+
+    }
+
+    /**
      * Logic for an if expression
      * An if function takes the following parameters:
-     * if(predicate_function,function,function)
+     * if(predicate_function,function,optional function)
+     * nest if's by placing another if inside the functions
      */
     if (node->token == ast->tokens->IF) {
       struct node* last_node;
       struct node* predicate;
       struct node* function1;
       struct node* function2;
-      struct node* tmp = (struct node*) malloc(sizeof(struct node));
-      tmp = node;
+      struct node* tmp = node;
       int num_functions = 0;
       int matching_brakets = 0;
       while(tmp != NULL) {
@@ -541,6 +552,7 @@ t_generic eval(t_ast *ast) {
         }
         else if (num_functions == 3 && matching_brakets == 0) {
           last_node = tmp;
+          num_functions++;
         }
         tmp = tmp->next;
       }
