@@ -361,6 +361,17 @@ t_ast* parse(char* e, t_stack* stack, t_heap* heap, int index) {
   return ast;
 }
 
+bool nodeIsFunction(struct node* node, t_ast* ast){
+  if (node->token <= MAX_BUILTIN && node->token >= MIN_BUILTIN) {
+    return true;
+  } else if (node->token == ast->tokens->IF){
+    return true;
+  } else if (node->object != NULL && node->object->value.type == Function) {
+    return true;
+  }
+  return false;
+}
+
 t_generic eval(t_ast *ast) {
   t_generic value;
   t_list* params;
@@ -483,52 +494,66 @@ t_generic eval(t_ast *ast) {
     /**
      * Logic for an if expression
      * An if function takes the following parameters:
-     * if(predicate_function {true expression body} {false expression body})
+     * if(predicate_function,function,function)
      */
     if (node->next != NULL && node->token == ast->tokens->IF) {
-      t_ast* newast = newAst();
-      newast->head = node->next;
-      t_generic result = eval(newast);
-      while (node->token != ast->tokens->RBRAC) {
-        node = node->next;
+      struct node* last_node;
+      struct node* predicate;
+      struct node* function1;
+      struct node* function2;
+      struct node* tmp = (struct node*) malloc(sizeof(struct node));
+      tmp = node;
+      int num_functions = 0;
+      int matching_brakets = 0;
+      while(tmp != NULL) {
+        if (tmp->token == ast->tokens->LBRAC) {
+          matching_brakets++;
+        }
+        if (tmp->token == ast->tokens->RBRAC) {
+          matching_brakets--;
+        }
+        if (num_functions == 0) {
+          // we have our predicate_function
+          if (nodeIsFunction(tmp, ast) && matching_brakets == 1) {
+            predicate = tmp;
+            num_functions++;
+          }
+        }
+        else if (num_functions == 1) {
+          // we have the first function evaluated if true
+          if (nodeIsFunction(tmp, ast) && matching_brakets == 1) {
+            function1 = tmp;
+            num_functions++;
+          }
+        }
+        else if (num_functions == 2) {
+          // we have the first function evaluated if true
+          if (nodeIsFunction(tmp, ast) && matching_brakets == 1) {
+            function2 = tmp;
+            num_functions++;
+          }
+        }
+        else if (num_functions == 3 && matching_brakets == 0) {
+          last_node = tmp;
+        }
+        tmp = tmp->next;
       }
+      t_ast* newast = newAst();
+      newast->head = predicate;
+      t_generic result = eval(newast);
       if (result.value.b == true) {
         // we know the predicate evaluated to true, so skip to that node
-        while (node->token != ast->tokens->LCURL) {
-          node = node->next;
-        }
-        node = node->next;
         // evaluate everything inside that expression body
-        newast->head = node;
+        newast->head = function1;
         value = eval(newast);
-        // now skip right to the end of the if body
-        while (node->token != ast->tokens->RCURL) {
-          node = node->next;
-        }
-        while (node->token != ast->tokens->RCURL) {
-          node = node->next;
-        }
-        while (node->token != ast->tokens->RBRAC) {
-          node = node->next;
-        }
-        node = node->next->next;
       } else {
         // the predicate evaluated to false, so skip to the second expression body
-        while (node->token != ast->tokens->RCURL) {
-          node = node->next;
-        }
-        node = node->next->next;
         // evaluate the second expression body
-        newast->head = node;
+        newast->head = function2;
         value = eval(newast);
-        // skip to the end of the if body
-        while (node->token != ast->tokens->RCURL) {
-          node = node->next;
-        }
-        while (node->token != ast->tokens->RBRAC) {
-          node = node->next;
-        }
       }
+      // skip to the end of the if body
+      node = last_node;
     }
 
     if (node->token <= MAX_BUILTIN && node->token >= MIN_BUILTIN) {
