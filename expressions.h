@@ -40,6 +40,13 @@ typedef struct {
   int READ;
   int EXCEPT;
   int EXIT;
+
+  int LIST;
+  int CONJ;
+  int FIRST;
+  int REST;
+  int LENGTH;
+
 } t_system;
 
 // the node structure is a linked list
