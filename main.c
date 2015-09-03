@@ -12,9 +12,6 @@ int EXIT_STATUS = 0;
 
 void repl_init();
 
-t_symboltable *symboltable;
-struct node *native_code;
-
 int main(int argc, char const *argv[]) {
 
   // first couple of lines initialise the system itself:
@@ -55,33 +52,7 @@ int main(int argc, char const *argv[]) {
     ast = parse(buffer, mainStack, heap, 0);
     eval(ast);
   } else {
-
-    //  if there is no input, test some things
-    struct node* starting_node = ast->node;
-
-    ast->node->next = newTokenNode(ast->system->ADD, ast);
-    ast->node = ast->node->next;
-
-    ast->node->next = newTokenNode(ast->tokens->LBRAC, ast);
-    ast->node = ast->node->next;
-
-    ast->node->next = newObjectNode(newInt(8, mainStack, heap), ast);
-    ast->node = ast->node->next;
-
-    ast->node->next = newTokenNode(ast->tokens->COMMA, ast);
-    ast->node = ast->node->next;
-
-    ast->node->next = newObjectNode(newInt(5, mainStack, heap), ast);
-    ast->node = ast->node->next;
-
-    ast->node->next = newTokenNode(ast->tokens->RBRAC, ast);
-    ast->node = ast->node->next;
-
-    ast->node->next = NULL;
-
-    ast->node = starting_node;
-
-    eval(ast);
+    exception("No input file was specified.",0 ,NULL);
   }
 
   // garbage function but resides in expressions
