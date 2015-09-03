@@ -30,9 +30,8 @@ typedef struct {
   int current;
 } t_symboltable;
 
-t_object* newInt(int v, t_stack* stack, t_heap* heap);
-t_object* newChar(char c, t_stack* stack, t_heap* heap);
-t_object* newString(char* s, t_stack* stack, t_heap* heap);
+t_symboltable *symboltable;
+struct node *native_code;
 
 void z_print(t_object* o);
 void z_println(t_object* o);
@@ -60,4 +59,4 @@ t_object* z_first(t_list* list);
 t_list* z_rest(t_list* list);
 
 t_symboltable* newSymbolTable(t_stack* stack);
-void addFunctionToSymbolTable(t_symboltable* symboltable, int id, struct node *node, enum t_type* formal_parameters[]);
+void addFunctionToSymbolTable(t_symboltable* symboltable, int id, struct node *node, enum t_type formal_parameters[]);
