@@ -1,4 +1,5 @@
 #include "system.h"
+#include "expressions.h"
 #include <string.h>
 
 void exception(char* e, int line_number, char* token) {
@@ -54,8 +55,16 @@ void z_print(t_object* o) {
       printf("%s", o->value.value.s);
       return;
     case Bool:
-      break;
+      printf("%d", o->value.value.b);
+      return;
     case List:
+      printf("<List Object>");
+      break;
+    case Exception:
+      printf("<Exception Object>");
+      break;
+    case Function:
+      printf("<Function Object>");
       break;
   }
   printf("<object> @ %d", o->id);
@@ -81,6 +90,14 @@ t_generic z_eq(t_object* a, t_object* b) {
   t_generic result;
   result.type = Bool;
   result.value = (t_generic_value) false;
+
+  t_generic teq;
+  teq = z_teq(a,b);
+  if (!teq.value.b) {
+    result.type = Exception;
+    result.value = (t_generic_value) "Parameter types do not match.";
+    return result;
+  }
   switch(a->value.type) {
     case Int:
       result.value = (t_generic_value) (a->value.value.i == b->value.value.i);
@@ -95,8 +112,18 @@ t_generic z_eq(t_object* a, t_object* b) {
       result.value = (t_generic_value) (strcmp(a->value.value.s,b->value.value.s) == 0);
       break;
     case Bool:
-      break;
+      result.value = (t_generic_value) (a->value.value.b == b->value.value.b);
     case List:
+      result.type = Exception;
+      result.value = (t_generic_value) "Could not compare Lists.";
+      break;
+    case Exception:
+      result.type = Exception;
+      result.value = (t_generic_value) "Could not compare Exceptions.";
+      break;
+    case Function:
+      result.type = Exception;
+      result.value = (t_generic_value) "Could not compare Functions.";
       break;
   }
   return result;
@@ -105,6 +132,15 @@ t_generic z_lt(t_object* a, t_object* b) {
   t_generic result;
   result.type = Bool;
   result.value = (t_generic_value) false;
+
+  t_generic teq;
+  teq = z_teq(a,b);
+  if (!teq.value.b) {
+    result.type = Exception;
+    result.value = (t_generic_value) "Parameter types do not match.";
+    return result;
+  }
+
   switch(a->value.type) {
     case Int:
       result.value = (t_generic_value) (a->value.value.i < b->value.value.i);
@@ -119,8 +155,20 @@ t_generic z_lt(t_object* a, t_object* b) {
       result.value = (t_generic_value) (strcmp(a->value.value.s,b->value.value.s) < 0);
       break;
     case Bool:
+      result.type = Exception;
+      result.value = (t_generic_value) "Could not compare Bools.";
       break;
     case List:
+      result.type = Exception;
+      result.value = (t_generic_value) "Could not compare Lists.";
+      break;
+    case Exception:
+      result.type = Exception;
+      result.value = (t_generic_value) "Could not compare Exceptions.";
+      break;
+    case Function:
+      result.type = Exception;
+      result.value = (t_generic_value) "Could not compare Functions.";
       break;
   }
   return result;
@@ -129,6 +177,15 @@ t_generic z_gt(t_object* a, t_object* b) {
   t_generic result;
   result.type = Bool;
   result.value = (t_generic_value) false;
+
+  t_generic teq;
+  teq = z_teq(a,b);
+  if (!teq.value.b) {
+    result.type = Exception;
+    result.value = (t_generic_value) "Parameter types do not match.";
+    return result;
+  }
+
   switch(a->value.type) {
     case Int:
       result.value = (t_generic_value) (a->value.value.i > b->value.value.i);
@@ -143,8 +200,20 @@ t_generic z_gt(t_object* a, t_object* b) {
       result.value = (t_generic_value) (strcmp(a->value.value.s,b->value.value.s) > 0);
       break;
     case Bool:
+      result.type = Exception;
+      result.value = (t_generic_value) "Could not compare Bools.";
       break;
     case List:
+      result.type = Exception;
+      result.value = (t_generic_value) "Could not compare Lists.";
+      break;
+    case Exception:
+      result.type = Exception;
+      result.value = (t_generic_value) "Could not compare Exceptions.";
+      break;
+    case Function:
+      result.type = Exception;
+      result.value = (t_generic_value) "Could not compare Functions.";
       break;
   }
   return result;
@@ -153,6 +222,15 @@ t_generic z_lteq(t_object* a, t_object* b) {
   t_generic result;
   result.type = Bool;
   result.value = (t_generic_value) false;
+
+  t_generic teq;
+  teq = z_teq(a,b);
+  if (!teq.value.b) {
+    result.type = Exception;
+    result.value = (t_generic_value) "Parameter types do not match.";
+    return result;
+  }
+
   switch(a->value.type) {
     case Int:
       result.value = (t_generic_value) (a->value.value.i <= b->value.value.i);
@@ -167,8 +245,20 @@ t_generic z_lteq(t_object* a, t_object* b) {
       result.value = (t_generic_value) (strcmp(a->value.value.s,b->value.value.s) <= 0);
       break;
     case Bool:
+      result.type = Exception;
+      result.value = (t_generic_value) "Could not compare Bools.";
       break;
     case List:
+      result.type = Exception;
+      result.value = (t_generic_value) "Could not compare Lists.";
+      break;
+    case Exception:
+      result.type = Exception;
+      result.value = (t_generic_value) "Could not compare Exceptions.";
+      break;
+    case Function:
+      result.type = Exception;
+      result.value = (t_generic_value) "Could not compare Functions.";
       break;
   }
   return result;
@@ -178,6 +268,15 @@ t_generic z_gteq(t_object* a, t_object* b){
   t_generic result;
   result.type = Bool;
   result.value = (t_generic_value) false;
+
+  t_generic teq;
+  teq = z_teq(a,b);
+  if (!teq.value.b) {
+    result.type = Exception;
+    result.value = (t_generic_value) "Parameter types do not match.";
+    return result;
+  }
+
   switch(a->value.type) {
     case Int:
       result.value = (t_generic_value) (a->value.value.i >= b->value.value.i);
@@ -192,8 +291,20 @@ t_generic z_gteq(t_object* a, t_object* b){
       result.value = (t_generic_value) (strcmp(a->value.value.s,b->value.value.s) >= 0);
       break;
     case Bool:
+      result.type = Exception;
+      result.value = (t_generic_value) "Could not compare Bools.";
       break;
     case List:
+      result.type = Exception;
+      result.value = (t_generic_value) "Could not compare Lists.";
+      break;
+    case Exception:
+      result.type = Exception;
+      result.value = (t_generic_value) "Could not compare Exceptions.";
+      break;
+    case Function:
+      result.type = Exception;
+      result.value = (t_generic_value) "Could not compare Functions.";
       break;
   }
   return result;
@@ -257,6 +368,12 @@ t_list* z_rest(t_list* list) {
   return new_list;
 }
 
+t_generic z_eval(char* expressions, t_stack* stack, t_heap* heap) {
+  t_ast* ast = newAst();
+  ast = parse(expressions, stack, heap, 0);
+  return eval(ast);
+}
+
 
 t_object* newSystem(t_stack* stack, t_heap* heap) {
   t_fieldlist* fields = newFieldlist();
@@ -265,34 +382,13 @@ t_object* newSystem(t_stack* stack, t_heap* heap) {
   return System;
 }
 
-t_object* newInt(int v, t_stack* stack, t_heap* heap) {
-  t_object* Int = newObject();
-  Int->value.value = (t_generic_value) v;
-  Int->value.type = (enum t_type) Int;
-  return Int;
-}
-
-t_object* newChar(char c, t_stack* stack, t_heap* heap) {
-  t_object* Char = newObject();
-  Char->value.value = (t_generic_value) c;
-  Char->value.type = (enum t_type) Char;
-  return Char;
-}
-
-t_object* newString(char* s, t_stack* stack, t_heap* heap) {
-  t_object* String = newObject();
-  String->value.value = (t_generic_value) s;
-  String->value.type = (enum t_type) String;
-  return String;
-}
-
 t_symboltable* newSymbolTable(t_stack* stack) {
   t_symboltable *s = (t_symboltable*) malloc(sizeof(t_symboltable));
   s->stack = stack;
   return s;
 }
 
-void addFunctionToSymbolTable(t_symboltable* symboltable, int id, struct node *node, enum t_type* formal_parameters[]) {
+void addFunctionToSymbolTable(t_symboltable* symboltable, int id, struct node *node, enum t_type formal_parameters[]) {
   t_symboltable_row* row = (t_symboltable_row*) malloc(sizeof(t_symboltable_row));
   row->id = id;
   row->node = node;
