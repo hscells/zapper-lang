@@ -4,14 +4,14 @@
 #include <stdlib.h>
 #include <stdbool.h>
 
-enum t_type { Int, Float, Char, String, Bool, List};
+enum t_type { Int, Float, Char, String, Bool, List, Exception, Function};
 
 typedef union {
-  int   i;
-  char  c;
-  char* s;
-  float f;
-  bool  b;
+  int     i;
+  char    c;
+  char*   s;
+  double  f;
+  bool    b;
 } t_generic_value;
 
 typedef struct {
