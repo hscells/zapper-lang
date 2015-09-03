@@ -491,12 +491,18 @@ t_generic eval(t_ast *ast) {
       return value;
     }
 
+    if (node->token == ast->tokens->RETURN) {
+      t_ast* newast = newAst();
+      newast->head = node->next->next;
+      value = eval(newast);
+    }
+
     /**
      * Logic for an if expression
      * An if function takes the following parameters:
      * if(predicate_function,function,function)
      */
-    if (node->next != NULL && node->token == ast->tokens->IF) {
+    if (node->token == ast->tokens->IF) {
       struct node* last_node;
       struct node* predicate;
       struct node* function1;
