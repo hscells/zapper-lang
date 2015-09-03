@@ -70,8 +70,9 @@ t_ast* newAst () {
   ast->line_count = 1;
   ast->tokens = tokens;
   ast->system = system;
-  ast->node = newTokenNode(ast->tokens->START, ast);
-  ast->head = ast->node;
+  ast->head = newTokenNode(ast->tokens->START, ast);
+  ast->node = ast->head;
+  ast->head->next = ast->node;
   node_id++;
   return ast;
 }
@@ -165,8 +166,6 @@ t_ast* parse(char* e, t_stack* stack, t_heap* heap, int index) {
   int type;
   char tok[255];
   t_ast* ast = newAst();
-  ast->node = newTokenNode(ast->tokens->START, ast);
-  struct node* starting_node = ast->node;
 
   for(i = index; i < strlen(e) - 1; i++) {
 
@@ -186,6 +185,13 @@ t_ast* parse(char* e, t_stack* stack, t_heap* heap, int index) {
       ast->line_count++;
       c = e[++i];
     }
+
+    // who the heck cares about spaces!?
+    while (c == ' ' || c == '\t'){
+      c = e[++i];
+      printf("space: %c\n", c);
+    }
+
 
     ast->node->line_num = ast->line_count;
 
@@ -342,10 +348,10 @@ t_ast* parse(char* e, t_stack* stack, t_heap* heap, int index) {
         ast->node = ast->node->next;
       }
     }
+
   }
 
   ast->node->next = NULL;
-  ast->node = starting_node;
 
   return ast;
 }
@@ -360,7 +366,7 @@ t_generic eval(t_ast *ast) {
   int current_function = 0;
 
   // print each value of the linked list of nodes
-  struct node* node = ast->node;
+  struct node* node = ast->head;
 
   printf("starting eval at %d\n", ast->node->token);
   while(node != NULL){
@@ -380,10 +386,10 @@ t_generic eval(t_ast *ast) {
       paren_count--;
       printf("take paren count: %d\n", paren_count);
       if (paren_count == 0) {
-        if(current_function == ast->system->ADD) {
-          t_generic r = z_add(params->head->value->value, params->head->next->value->value);
-          printf("the type is of %d\n", r.type);
-          return r;
+        if (current_function == 0) {
+          return value;
+        } else if(current_function == ast->system->ADD) {
+          return z_add(params->head->value->value, params->head->next->value->value);
         } else if(current_function == ast->system->SUB) {
           return z_sub(params->head->value->value, params->head->next->value->value);
         } else if(current_function == ast->system->MUL) {
@@ -411,6 +417,8 @@ t_generic eval(t_ast *ast) {
           return z_read();
         } else if(current_function == ast->system->EXIT) {
           node->next = NULL;
+        } else {
+          exception("Could not evaluate function.", node->line_num, "<Function Object>");
         }
         collect_list(params);
         current_function = 0;
