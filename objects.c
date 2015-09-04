@@ -56,6 +56,7 @@ t_object* newObject() {
   obj->id = newObjectId();
   obj->fields = newFieldlist();
   obj->methods = newMethodlist();
+  obj->value = newGeneric();
   return obj;
 }
 

@@ -18,7 +18,7 @@ typedef struct {
 typedef struct {
   t_methodlist* methods;
   t_fieldlist* fields;
-  t_generic value;
+  t_generic* value;
   int id;
 } t_object;
 
