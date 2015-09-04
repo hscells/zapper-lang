@@ -4,7 +4,7 @@
 #include <stdlib.h>
 #include <stdbool.h>
 
-enum t_type { Int, Float, Char, String, Bool, List, Exception, Function};
+enum t_type { Int, Float, Char, String, Bool, List, Exception, Function, Symbol};
 
 typedef union {
   int     i;
