@@ -12,8 +12,6 @@
 #define NUMBERS "1234567890"
 #define CHARACTERS "_abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 #define PRECISION "."
-#define CHAR_DELIM "'"
-#define STRG_DELIM "\""
 
 #define MIN_BUILTIN 0xa000
 #define MAX_BUILTIN 0xa012
@@ -135,9 +133,12 @@ int inferType(char* token) {
   bool contains_number = false;
   bool contains_char = false;;
   bool contains_precision = false;
+  char start_char;
+  char end_char;
   char* c;
 
   c = token;
+  start_char = token[0];
   while (*c) {
     if (strchr(NUMBERS, *c)){
       contains_number = true;
@@ -148,12 +149,13 @@ int inferType(char* token) {
     if (strchr(PRECISION, *c)) {
       contains_precision = true;
     }
+    end_char = *c;
     c++;
   }
 
-  if (contains_char && strlen(token) > 1) {
+  if (contains_char && strlen(token) > 1 && start_char == '"' && end_char == '"') {
     return String;
-  } else if (contains_char && strlen(token) == 1) {
+  } else if (contains_char && strlen(token) == 1 && start_char == '\'' && end_char == '\'') {
     return Char;
   } else if (contains_number && !contains_precision && !contains_char) {
     return Int;
@@ -162,7 +164,7 @@ int inferType(char* token) {
   }
 
   // wtf do I do now?
-  return -1;
+  return Symbol;
 }
 
 t_ast* parse(char* e, t_stack* stack, t_heap* heap, int index) {
@@ -330,23 +332,29 @@ t_ast* parse(char* e, t_stack* stack, t_heap* heap, int index) {
           case -1:
             exception("Could not determine the type of this object", ast->node->line_num, tok);
           case Int:
-            obj->value.value = (t_generic_value) atoi(tok);
-            obj->value.type = Int;
+            obj->value->value = (t_generic_value) atoi(tok);
+            obj->value->type = Int;
             ast->node->next = newObjectNode(obj, ast);
             break;
           case Char:
-            obj->value.value = (t_generic_value) tok[0];
-            obj->value.type = Char;
+            obj->value->value = (t_generic_value) tok[0];
+            obj->value->type = Char;
             ast->node->next = newObjectNode(obj, ast);
             break;
           case Float:
-            obj->value.value = (t_generic_value) atof(tok);
-            obj->value.type = Char;
+            obj->value->value = (t_generic_value) atof(tok);
+            obj->value->type = Char;
             ast->node->next = newObjectNode(obj, ast);
             break;
           case String:
-            obj->value.value = (t_generic_value) tok;
-            obj->value.type = String;
+            obj->value->value = (t_generic_value) tok;
+            obj->value->type = String;
+            ast->node->next = newObjectNode(obj, ast);
+            break;
+          case Symbol:
+            obj->value->value = (t_generic_value) tok;
+            obj->value->type = Symbol;
+            z_println(obj);
             ast->node->next = newObjectNode(obj, ast);
             break;
         }
@@ -368,14 +376,14 @@ bool nodeIsFunction(struct node* node, t_ast* ast){
     return true;
   } else if (node->token == ast->tokens->RETURN){
     return true;
-  } else if (node->object != NULL && node->object->value.type == Function) {
+  } else if (node->object != NULL && node->object->value->type == Function) {
     return true;
   }
   return false;
 }
 
-t_generic eval(t_ast *ast) {
-  t_generic value;
+t_generic* eval(t_ast *ast) {
+  t_generic* value;
   t_list* params;
   int paren_count = 0;
 
@@ -385,6 +393,8 @@ t_generic eval(t_ast *ast) {
 
   // print each value of the linked list of nodes
   struct node* node = ast->head;
+
+  t_symboltable* symboltable = newSymbolTable();
 
   node = ast->head;
   printf("new eval stack\n");
@@ -493,6 +503,11 @@ t_generic eval(t_ast *ast) {
       return value;
     }
 
+    /**
+     * Logic for a return
+     * return(EXPRESSION)
+     * The value inside the return is evaluated and set to the current value context
+     */
     if (node->token == ast->tokens->RETURN) {
       t_ast* newast = newAst();
       newast->head = node->next->next;
@@ -502,10 +517,49 @@ t_generic eval(t_ast *ast) {
     /**
      * Logic for a function definition
      * A fn is defined as follows:
-     * fn(function_name,list(int(a),float(b)),{expressions})
+     * fn(add,(a,b),{return(+(a,b))})
      */
     if (node->token == ast->tokens->FN) {
+      char* name;
+      t_object* object;
+      struct node* body_node;
+      t_list* parameters = z_list();
+      struct node* tmp = node;
 
+      bool found_name = false;
+      bool found_params = false;
+      bool found_body = false;
+
+      printf("starting function def\n");
+      while (tmp != NULL) {
+
+        if(tmp->object != NULL) {
+          if (tmp->object->value->type == Symbol) {
+            z_print(tmp->object);
+            printf(" symbol @ line %d, token is: %d\n", tmp->line_num, tmp->token);
+          }
+        }
+
+        if (!found_name && !found_params && !found_body && tmp->object != NULL) {
+          if (tmp->object->value->type == Symbol) {
+            object = tmp->object;
+            // z_println(object);
+            found_name = true;
+          }
+        }
+
+        if (found_name && !found_params && !found_body && tmp->token == ast->tokens->LBRAC) {
+          body_node = tmp;
+          found_params = true;
+        }
+
+        if (found_name && found_params && !found_body && tmp->token == ast->tokens->LCURL) {
+          body_node = tmp;
+          found_body = true;
+        }
+        tmp = tmp->next;
+      }
+      addToSymbolTable(symboltable, name, object, body_node, parameters);
     }
 
     /**
@@ -558,8 +612,8 @@ t_generic eval(t_ast *ast) {
       }
       t_ast* newast = newAst();
       newast->head = predicate;
-      t_generic result = eval(newast);
-      if (result.value.b == true) {
+      t_generic* result = eval(newast);
+      if (result->value.b == true) {
         // we know the predicate evaluated to true, so skip to that node
         // evaluate everything inside that expression body
         newast->head = function1;
@@ -600,7 +654,7 @@ t_generic eval(t_ast *ast) {
         }
         current_function = 0;
       }
-    } else if (node->token == ast->tokens->OBJECT && node->object->value.type == Function) {
+    } else if (node->token == ast->tokens->OBJECT && node->object->value->type == Function) {
       //do something with the symbol table!
     } else if (node->token == ast->tokens->OBJECT) {
       // we know that this must be just a plain old object now
