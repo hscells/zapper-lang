@@ -71,7 +71,7 @@ void z_print(t_object* o) {
       printf("<Function Object>");
       return;
     case Symbol:
-      printf("<Symbol Object> (%s)", o->value->value.s);
+      z_print(getSymbolByName(symboltable, o->value->value.s));
       return;
   }
   printf("<object> @ %d", o->id);
@@ -116,7 +116,7 @@ t_generic* z_eq(t_object* a, t_object* b) {
       result->value = (t_generic_value) (a->value->value.c == b->value->value.c);
       break;
     case String:
-      result->value = (t_generic_value) (strcmp(a->value->value.s,b->value->value.s) == 0);
+      result->value = (t_generic_value) (strcmp(a->value->value.s, b->value->value.s) == 0);
       break;
     case Bool:
       result->value = (t_generic_value) (a->value->value.b == b->value->value.b);
@@ -133,8 +133,7 @@ t_generic* z_eq(t_object* a, t_object* b) {
       result->value = (t_generic_value) "Could not compare Functions.";
       break;
     case Symbol:
-      result->type = Exception;
-      result->value = (t_generic_value) "Could not compare Symbols.";
+      result->value = (t_generic_value) (strcmp(a->value->value.s, b->value->value.s) == 0);
       break;
   }
   return result;
@@ -395,6 +394,21 @@ t_list* z_rest(t_list* list) {
   return new_list;
 }
 
+t_object* z_nth(t_list* list, int index) {
+  if (index > z_length(list) - 1 || index < 0) {
+    z_exception("Index out of bounds.");
+    return NULL;
+  }
+  struct atom* a = list->head;
+  for (int i = 0; i < z_length(list); i++) {
+    if (i == index) {
+      return a->value;
+    }
+    a = a->next;
+  }
+  return NULL;
+}
+
 int z_length(t_list* list) {
   int length = 0;
   list->atom = list->head;
@@ -411,6 +425,12 @@ t_generic* z_eval(char* expressions, t_stack* stack, t_heap* heap) {
   return eval(ast);
 }
 
+t_object* z_int(int x) {
+  t_object* obj = newObject();
+  obj->value->type = Int;
+  obj->value->value = (t_generic_value) x;
+  return obj;
+}
 
 t_object* newSystem(t_stack* stack, t_heap* heap) {
   t_fieldlist* fields = newFieldlist();
@@ -421,14 +441,45 @@ t_object* newSystem(t_stack* stack, t_heap* heap) {
 
 t_symboltable* newSymbolTable() {
   t_symboltable *s = (t_symboltable*) malloc(sizeof(t_symboltable));
+  s->head = NULL;
   return s;
 }
 
-void addToSymbolTable(t_symboltable* symboltable, char* name, t_object* object, struct node *node, t_list* formal_parameters) {
-  t_symboltable_row* row = (t_symboltable_row*) malloc(sizeof(t_symboltable_row));
-  row->name = name;
-  row->object = object;
+void addFunctionToSymbolTable(t_symboltable* symboltable, char* name, struct node *node, t_list* formal_parameters) {
+  struct t_symboltable_row* row = (struct t_symboltable_row*) malloc(sizeof(struct t_symboltable_row));
+  row->object = newObject();
+  row->id = row->object->id;
   row->node = node;
   row->formal_parameters = formal_parameters;
-  symboltable->row[symboltable->current++] = row;
+  if (symboltable->head == NULL) {
+    symboltable->head = row;
+    symboltable->row = row;
+  } else {
+    symboltable->row->next = row;
+  }
+}
+
+void addObjectToSymbolTable(t_symboltable* symboltable, char* name, t_object* object, struct node *node) {
+  struct t_symboltable_row* row = (struct t_symboltable_row*) malloc(sizeof(struct t_symboltable_row));
+  row->name = name;
+  row->id = object->id;
+  row->object = object;
+  if (symboltable->head == NULL) {
+    symboltable->head = row;
+    symboltable->row = row;
+  } else {
+    symboltable->row->next = row;
+  }
+}
+
+t_object* getSymbolByName(t_symboltable* symboltable, char* name) {
+  symboltable->row = symboltable->head;
+  while (symboltable->row != NULL) {
+    if (strcmp(symboltable->row->name, name) == 0) {
+      return symboltable->row->object;
+    }
+    symboltable->row = symboltable->row->next;
+  }
+  exception("Object has no value",-1, name);
+  return NULL;
 }

@@ -17,15 +17,18 @@ typedef struct {
   struct atom* atom;
 } t_list;
 
-typedef struct {
+struct t_symboltable_row{
   t_object* object;
   char* name;
+  int id;
   struct node* node;
   t_list* formal_parameters;
-} t_symboltable_row;
+  struct t_symboltable_row* next;
+} ;
 
 typedef struct {
-  t_symboltable_row* row[0xb00];
+  struct t_symboltable_row* row;
+  struct t_symboltable_row* head;
   t_stack* stack;
   int current;
 } t_symboltable;
@@ -59,7 +62,12 @@ t_list* z_list();
 void z_conj(t_list* list, t_object* o);
 t_object* z_first(t_list* list);
 t_list* z_rest(t_list* list);
+t_object* z_nth(t_list* list, int index);
 int z_length(t_list* list);
 
+t_object* z_int(int x);
+
 t_symboltable* newSymbolTable();
-void addToSymbolTable(t_symboltable* symboltable, char* name, t_object* object, struct node *node, t_list* formal_parameters);
+void addFunctionToSymbolTable(t_symboltable* symboltable, char*, struct node *node, t_list* formal_parameters);
+void addObjectToSymbolTable(t_symboltable* symboltable, char* name, t_object* object, struct node *node);
+t_object* getSymbolByName(t_symboltable* symboltable, char* name);
