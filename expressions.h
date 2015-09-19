@@ -18,6 +18,7 @@ typedef struct {
   int CHAR;
   int STRING;
   int LIST;
+  int BOOL;
   int COMMA;
   int DOT;
   int CLASS;

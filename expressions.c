@@ -35,6 +35,7 @@ t_token* initTokens() {
   tokens->CHAR   = 0x0012;
   tokens->STRING = 0x0013;
   tokens->LIST   = 0x0014;
+  tokens->LIST   = 0x0020;
   tokens->COMMA  = 0x0015;
   tokens->DOT    = 0x0016;
   tokens->CLASS  = 0x0017;
@@ -96,14 +97,15 @@ struct node* newTokenNode(int token, t_ast* ast) {
 struct node* newObjectNode(t_object* object, t_ast* ast) {
   struct node* node = newNode();
   node->token = ast->tokens->OBJECT;
-  node->object = object;
+  node->object = newObject();
+  node->object->value->value = object->value->value;
+  node->object->value->type = object->value->type;
   return node;
 }
 
 void collect_ast(t_ast *ast) {
   struct node* curr;
   struct node* head = ast->head;
-  printf("about to free ast\n");
   while((curr = head) != NULL) {
     head = head->next;
     free(curr);
@@ -328,6 +330,7 @@ t_ast* parse(char* e, t_stack* stack, t_heap* heap, int index) {
         type = inferType(tok);
         // printf("this object is of type <%d>: %s\n", type, tok);
         t_object* obj = newObject();
+        char* copy;
         switch(type) {
           case -1:
             exception("Could not determine the type of this object", ast->node->line_num, tok);
@@ -346,18 +349,24 @@ t_ast* parse(char* e, t_stack* stack, t_heap* heap, int index) {
             obj->value->type = Char;
             ast->node->next = newObjectNode(obj, ast);
             break;
+          // strings and symbols are a little more tricky, because of pointers
+          // so we need to allocate space for the new char*
           case String:
-            obj->value->value = (t_generic_value) tok;
-            obj->value->type = String;
+            copy = malloc(strlen(tok) + 1);
+            strcpy(copy, tok);
+            obj->value->type = Symbol;
+            obj->value->value.s = copy;
             ast->node->next = newObjectNode(obj, ast);
             break;
           case Symbol:
-            obj->value->value = (t_generic_value) tok;
+            copy = malloc(strlen(tok) + 1);
+            strcpy(copy, tok);
             obj->value->type = Symbol;
-            z_println(obj);
+            obj->value->value.s = copy;
             ast->node->next = newObjectNode(obj, ast);
             break;
         }
+        collect(obj);
         ast->node = ast->node->next;
       }
     }
@@ -382,6 +391,38 @@ bool nodeIsFunction(struct node* node, t_ast* ast){
   return false;
 }
 
+/**
+ * given an ast location, return a list object
+ * @param  ast the ast object with the head node pointing at the start of the list
+ * @return     a list object
+ */
+t_list* getList(t_ast* ast) {
+  int depth = 0;
+
+  struct node* node = ast->head;
+  t_list* list = z_list();
+
+  while ((node = node->next) != NULL) {
+    if (node->token == ast->tokens->LBRAC) {
+      depth++;
+    } else if (node->token == ast->tokens->RBRAC) {
+      depth--;
+      if (depth == 0) {
+        return list;
+      }
+    }
+
+    else if (node->token == ast->tokens->OBJECT) {
+      z_conj(list, node->object);
+    }
+
+    if (node->next == NULL) {
+      exception("Unmatched parenthesis", node->line_num, ")");
+    }
+  }
+  return list;
+}
+
 t_generic* eval(t_ast *ast) {
   t_generic* value;
   t_list* params;
@@ -393,8 +434,6 @@ t_generic* eval(t_ast *ast) {
 
   // print each value of the linked list of nodes
   struct node* node = ast->head;
-
-  t_symboltable* symboltable = newSymbolTable();
 
   node = ast->head;
   printf("new eval stack\n");
@@ -514,52 +553,26 @@ t_generic* eval(t_ast *ast) {
       value = eval(newast);
     }
 
+    if (node->token == ast->tokens->INT) {
+      t_ast* tmp_ast = newAst();
+      tmp_ast->head = node;
+      t_list* args = getList(tmp_ast);
+      if (z_length(args) == 2) {
+        // z_println(z_nth(args,1));
+        addObjectToSymbolTable(symboltable, z_nth(args, 0)->value->value.s, z_nth(args, 1), node);
+      }
+    }
+
     /**
      * Logic for a function definition
      * A fn is defined as follows:
      * fn(add,(a,b),{return(+(a,b))})
      */
     if (node->token == ast->tokens->FN) {
-      char* name;
-      t_object* object;
-      struct node* body_node;
-      t_list* parameters = z_list();
-      struct node* tmp = node;
-
-      bool found_name = false;
-      bool found_params = false;
-      bool found_body = false;
-
-      printf("starting function def\n");
-      while (tmp != NULL) {
-
-        if(tmp->object != NULL) {
-          if (tmp->object->value->type == Symbol) {
-            z_print(tmp->object);
-            printf(" symbol @ line %d, token is: %d\n", tmp->line_num, tmp->token);
-          }
-        }
-
-        if (!found_name && !found_params && !found_body && tmp->object != NULL) {
-          if (tmp->object->value->type == Symbol) {
-            object = tmp->object;
-            // z_println(object);
-            found_name = true;
-          }
-        }
-
-        if (found_name && !found_params && !found_body && tmp->token == ast->tokens->LBRAC) {
-          body_node = tmp;
-          found_params = true;
-        }
-
-        if (found_name && found_params && !found_body && tmp->token == ast->tokens->LCURL) {
-          body_node = tmp;
-          found_body = true;
-        }
-        tmp = tmp->next;
-      }
-      addToSymbolTable(symboltable, name, object, body_node, parameters);
+      t_ast* tmp_ast = newAst();
+      tmp_ast->head = node;
+      t_list* args = getList(tmp_ast);
+      addFunctionToSymbolTable(symboltable, z_nth(args, 0)->value->value.s, node, z_rest(args));
     }
 
     /**
@@ -644,6 +657,7 @@ t_generic* eval(t_ast *ast) {
         while (node->token != ast->tokens->RBRAC) {
           node = node->next;
         }
+        free(newast);
       } else {
         // this will evaluate a builtin function and record it's value
         t_ast* newast = newAst();
@@ -653,6 +667,7 @@ t_generic* eval(t_ast *ast) {
           node = node->next;
         }
         current_function = 0;
+        free(newast);
       }
     } else if (node->token == ast->tokens->OBJECT && node->object->value->type == Function) {
       //do something with the symbol table!
