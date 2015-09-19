@@ -20,12 +20,13 @@ int main(int argc, char const *argv[]) {
   t_heap* heap = newHeap();
   // create a stack on the heap for the main class
   t_stack* mainStack = newStack();
-  symboltable = newSymbolTable(mainStack);
+  // symboltable = newSymbolTable(mainStack);
 
   t_ast* ast = newAst();
 
   native_code = malloc(sizeof(struct node));
 
+  symboltable = newSymbolTable();
   // these next lines are used to read a file in for evaluation
 
   char *buffer = 0;
