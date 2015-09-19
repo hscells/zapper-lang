@@ -2,7 +2,6 @@
 #include <stdlib.h>
 #include "objects.h"
 #include "system.h"
-#include "types.h"
 
 #define STACK_SIZE 1024;
 #define HEAP_SIZE 1024;
