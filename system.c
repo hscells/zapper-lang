@@ -432,9 +432,10 @@ void addFunctionToSymbolTable(t_symboltable* s, char* name, struct node *node, t
   }
 }
 
-void addObjectToSymbolTable(t_symboltable* s, char* name, t_object* object, struct node *node) {
+void addObjectToSymbolTable(t_symboltable* s, t_object* symbol, t_object* object, struct node *node) {
   struct t_symboltable_row* row = (struct t_symboltable_row*) malloc(sizeof(struct t_symboltable_row));
-  row->name = name;
+  row->name = symbol->value->value.s;
+  row->symbol = symbol;
   row->node = node;
   if (object != NULL) {
     row->object = object;
