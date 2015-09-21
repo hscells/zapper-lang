@@ -34,8 +34,8 @@ t_token* initTokens() {
   tokens->FLOAT  = 0x0011;
   tokens->CHAR   = 0x0012;
   tokens->STRING = 0x0013;
+  tokens->BOOL   = 0x0020;
   tokens->LIST   = 0x0014;
-  tokens->LIST   = 0x0020;
   tokens->COMMA  = 0x0015;
   tokens->DOT    = 0x0016;
   tokens->CLASS  = 0x0017;
@@ -46,6 +46,7 @@ t_token* initTokens() {
 
 t_system* initSystem() {
   t_system* system = (t_system*) malloc(sizeof(t_system));
+  // builtins
   system->ADD     = 0xa000;
   system->SUB     = 0xa001;
   system->MUL     = 0xa002;
@@ -60,6 +61,7 @@ t_system* initSystem() {
   system->READ    = 0xa010;
   system->EXCEPT  = 0xa011;
 
+  // list ops
   system->LIST    = 0xa013;
   system->CONJ    = 0xa014;
   system->FIRST   = 0xa015;
@@ -553,26 +555,62 @@ t_object* eval(t_ast *ast) {
       value = eval(newast);
     }
 
-    if (node->token == ast->tokens->INT) {
+    /**
+     * Creates a new symbol->object pair and add the combo to a symbol table
+     */
+    if (node->token == ast->tokens->INT
+    ||  node->token == ast->tokens->FLOAT
+    ||  node->token == ast->tokens->CHAR
+    ||  node->token == ast->tokens->STRING
+    ||  node->token == ast->tokens->BOOL) {
       t_ast* tmp_ast = newAst();
       tmp_ast->head = node;
       t_list* args = getList(tmp_ast);
+      // the parsing creates objects and infers the type ahead of execution, so the zapper typeof function can be used
       if (z_length(args) == 2) {
-        // z_println(z_nth(args,1));
-        if (z_typeof(z_nth(args,1)) == Int){
-          addObjectToSymbolTable(symboltable, z_nth(args, 0)->value->value.s, z_nth(args, 1), node);
-        } else {
-          exception("The value being assigned to the object was not an Int", node->line_num, z_nth(args, 0)->value->value.s);
+        switch(z_typeof(z_nth(args,1))){
+          case Int:
+            z_nth(args, 0)->value->type = Int;
+            addObjectToSymbolTable(symboltable, z_nth(args, 0), z_nth(args, 1), node);
+            break;
+          case Float:
+            z_nth(args, 0)->value->type = Float;
+            addObjectToSymbolTable(symboltable, z_nth(args, 0), z_nth(args, 1), node);
+            break;
+          case Char:
+            z_nth(args, 0)->value->type = Char;
+            addObjectToSymbolTable(symboltable, z_nth(args, 0), z_nth(args, 1), node);
+            break;
+          case String:
+            z_nth(args, 0)->value->type = String;
+            addObjectToSymbolTable(symboltable, z_nth(args, 0), z_nth(args, 1), node);
+            break;
+          case Bool:
+            z_nth(args, 0)->value->type = Bool;
+            addObjectToSymbolTable(symboltable, z_nth(args, 0), z_nth(args, 1), node);
+            break;
+          default:
+            exception("Could not reliably determine the type to create the object", node->line_num, z_nth(args, 0)->value->value.s);
         }
       } else if (z_length(args) == 1) {
-        addObjectToSymbolTable(symboltable, z_nth(args, 0)->value->value.s, NULL, node);
+        if(node->token == ast->tokens->IF) {
+          z_nth(args, 0)->value->type = Int;
+        } else if (node->token == ast->tokens->FLOAT) {
+          z_nth(args, 0)->value->type = Float;
+        } else if (node->token == ast->tokens->CHAR) {
+          z_nth(args, 0)->value->type = Char;
+        } else if (node->token == ast->tokens->STRING) {
+          z_nth(args, 0)->value->type = String;
+        } else if (node->token == ast->tokens->BOOL) {
+          z_nth(args, 0)->value->type = Bool;
+        }
+        addObjectToSymbolTable(symboltable, z_nth(args, 0), NULL, node);
       } else {
         exception("Invalid number of arguments passed to assignment", node->line_num, "int");
       }
       while (node->token != ast->tokens->RBRAC) {
         node = node->next;
       }
-      printSymboltable(symboltable);
     }
 
     /**
@@ -687,7 +725,11 @@ t_object* eval(t_ast *ast) {
       // we know that this must be just a plain old object now
       if (inside_actual_parameters) {
         // if the ast is inside a parameter list, add the object to that list
-        z_conj(params, node->object);
+        if(z_typeof(node->object)== Symbol) {
+          z_conj(params, getSymbolByName(symboltable, node->object->value->value.s));
+        } else {
+          z_conj(params, node->object);
+        }
       }
     }
 
