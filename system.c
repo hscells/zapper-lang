@@ -59,7 +59,7 @@ t_object* z_div(t_object* a, t_object* b) {
   return result;
 }
 
-void z_print(t_object* o) {
+void z_print(t_object* o, t_symboltable* s) {
   if(o == NULL) {
     printf("undefined");
     return;
@@ -91,14 +91,14 @@ void z_print(t_object* o) {
       printf("<Function Object>");
       return;
     case Symbol:
-      z_print(getSymbolByName(symboltable, o->value->value.s));
+      z_print(getSymbolByName(s, o),s);
       return;
   }
   printf("<object> @ %d", o->id);
 }
 
-void z_println(t_object* o) {
-  z_print(o);
+void z_println(t_object* o, t_symboltable* s) {
+  z_print(o,s);
   printf("\n");
 }
 
@@ -339,9 +339,10 @@ void z_conj(t_list* list, t_object* o) {
   atom->value = o;
   if (list->head == NULL) {
     list->head = atom;
-    list->atom = atom;
+    list->tail = atom;
   } else {
-    list->atom->next = atom;
+    list->tail->next = atom;
+    list->tail = atom;
   }
 }
 
@@ -383,18 +384,18 @@ t_object* z_nth(t_list* list, int index) {
 
 int z_length(t_list* list) {
   int length = 0;
-  list->atom = list->head;
-  while(list->atom != NULL) {
+  struct atom* atom = list->head;
+  while(atom != NULL) {
     length++;
-    list->atom = list->atom->next;
+    atom = atom->next;
   }
   return length;
 }
 
-t_object* z_eval(char* expressions, t_stack* stack, t_heap* heap) {
+t_object* z_eval(char* expressions, t_stack* stack, t_heap* heap, t_symboltable* s) {
   t_ast* ast = newAst();
   ast = parse(expressions, stack, heap, 0);
-  return eval(ast);
+  return eval(ast, s);
 }
 
 t_object* z_int(int x) {
@@ -417,11 +418,13 @@ t_symboltable* newSymbolTable() {
   return s;
 }
 
-void addFunctionToSymbolTable(t_symboltable* s, char* name, struct node *node, t_list* formal_parameters) {
+void addFunctionToSymbolTable(t_symboltable* s, t_object* symbol, struct node *start_node, struct node *end_node, t_list* formal_parameters) {
   struct t_symboltable_row* row = (struct t_symboltable_row*) malloc(sizeof(struct t_symboltable_row));
-  row->object = newObject();
+  row->name = symbol->value->value.s;
+  row->object = symbol;
   row->id = row->object->id;
-  row->node = node;
+  row->start_node = start_node;
+  row->end_node = end_node;
   row->formal_parameters = formal_parameters;
   if (s->head == NULL) {
     s->head = row;
@@ -435,7 +438,7 @@ void addObjectToSymbolTable(t_symboltable* s, t_object* symbol, t_object* object
   struct t_symboltable_row* row = (struct t_symboltable_row*) malloc(sizeof(struct t_symboltable_row));
   row->name = symbol->value->value.s;
   row->symbol = symbol;
-  row->node = node;
+  row->start_node = node;
   if (object != NULL) {
     row->object = object;
     row->id = object->id;
@@ -451,6 +454,17 @@ void addObjectToSymbolTable(t_symboltable* s, t_object* symbol, t_object* object
   }
 }
 
+bool inSymboltable(t_symboltable* s, t_object* o) {
+  struct t_symboltable_row* r = s->head;
+  while(r != NULL) {
+    if (strcmp(r->name, o->value->value.s) == 0) {
+      return true;
+    }
+    r = r->next;
+  }
+  return false;
+}
+
 void printSymboltable(t_symboltable* s) {
   struct t_symboltable_row* r = s->head;
   printf("Current Symboltable:\n");
@@ -460,14 +474,39 @@ void printSymboltable(t_symboltable* s) {
   }
 }
 
-t_object* getSymbolByName(t_symboltable* s, char* name) {
+t_ast* getFunctionAst(t_symboltable* s, t_object* o) {
+  struct t_symboltable_row* r = s->head;
+  t_ast* ast = newAst();
+  while(r != NULL) {
+    if (strcmp(r->name, o->value->value.s) == 0) {
+      ast->head = r->start_node;
+      ast->tail = r->end_node;
+    }
+    r = r->next;
+  }
+  return ast;
+}
+
+t_list* getFunctionParams(t_symboltable* s, t_object* o) {
+  struct t_symboltable_row* r = s->head;
+  t_list* list = z_list();
+  while(r != NULL) {
+    if (strcmp(r->name, o->value->value.s) == 0) {
+      return r->formal_parameters;
+    }
+    r = r->next;
+  }
+  return list;
+}
+
+t_object* getSymbolByName(t_symboltable* s, t_object* o) {
   struct t_symboltable_row* r = s->head;
   while (r != NULL) {
-    if (strcmp(r->name, name) == 0) {
+    if (strcmp(r->name, o->value->value.s) == 0) {
       return r->object;
     }
     r = r->next;
   }
-  exception("Object has no value",-1, name);
+  exception("Object has no value",-1,o->value->value.s);
   return NULL;
 }
