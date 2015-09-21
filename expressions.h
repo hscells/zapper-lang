@@ -3,7 +3,6 @@
 
 #include <stdlib.h>
 #include "types.h"
-#include "system.h"
 #include "objects.h"
 #include "garbage.h"
 
@@ -66,8 +65,9 @@ struct node {
 };
 
 typedef struct {
-  struct node *node;
   struct node *head;
+  struct node *node;
+  struct node *tail;
   t_token* tokens;
   t_system* system;
   int line_count;
@@ -84,7 +84,6 @@ t_ast* newAst();
 struct node* newNode();
 struct node* newTokenNode(int token, t_ast* ast);
 struct node* newObjectNode(t_object* object, t_ast* ast);
-t_object* eval(t_ast *ast);
 void collect_ast(t_ast *ast);
 
 #endif
