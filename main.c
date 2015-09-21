@@ -24,7 +24,7 @@ int main(int argc, char const *argv[]) {
 
   native_code = malloc(sizeof(struct node));
 
-  symboltable = newSymbolTable();
+  t_symboltable* symboltable = newSymbolTable();
   // these next lines are used to read a file in for evaluation
 
   char *buffer = 0;
@@ -49,7 +49,7 @@ int main(int argc, char const *argv[]) {
 
   if (buffer) {
     ast = parse(buffer, mainStack, heap, 0);
-    eval(ast);
+    eval(ast, symboltable);
   } else {
     exception("No input file was specified.",0 ,NULL);
   }
@@ -67,8 +67,9 @@ void repl_init(t_stack* stack, t_heap* heap) {
   while (EXIT_STATUS == 0 && fgets(input, INPUT_SIZE, stdin)) {
     t_expression *expression = (t_expression*) malloc(sizeof(t_expression));
     expression->ast = parse(input, stack, heap, 0);
-
-    eval(expression->ast);
+    
+    t_symboltable* symboltable = newSymbolTable();
+    eval(expression->ast, symboltable);
     free(expression->ast);
     free(expression);
 
