@@ -3,9 +3,6 @@
 #include <strings.h>
 #include <stdbool.h>
 #include "expressions.h"
-#include "system.h"
-#include "garbage.h"
-#include "types.h"
 
 #define EOL '\n'
 
@@ -641,6 +638,9 @@ t_object* eval(t_ast *ast) {
       while (node->token != ast->tokens->RBRAC) {
         node = node->next;
       }
+
+      printf("function name: %s\n", z_nth(args,0)->value->value.s);
+      // printf("number of args: %d\n", z_length(z_nth(args,1)));
     }
 
     /**

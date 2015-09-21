@@ -1,9 +1,7 @@
 #include <stdio.h>
-#include "objects.h"
 #include "types.h"
+#include "objects.h"
 #include "expressions.h"
-#include "garbage.h"
-
 #include "system.h"
 
 #define INPUT_SIZE 512

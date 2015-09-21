@@ -1,6 +1,11 @@
+#ifndef __EXPRESSIONS_H
+#define __EXPRESSIONS_H
+
 #include <stdlib.h>
-#include "objects.h"
 #include "types.h"
+#include "system.h"
+#include "objects.h"
+#include "garbage.h"
 
 typedef struct {
   int START;
@@ -81,3 +86,5 @@ struct node* newTokenNode(int token, t_ast* ast);
 struct node* newObjectNode(t_object* object, t_ast* ast);
 t_object* eval(t_ast *ast);
 void collect_ast(t_ast *ast);
+
+#endif

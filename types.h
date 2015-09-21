@@ -19,4 +19,19 @@ typedef struct {
   enum t_type type;
 } t_generic;
 
+typedef struct {
+  t_generic* value;
+  int id;
+} t_object;
+
+struct atom {
+  t_object* value;
+  struct atom* next;
+};
+
+typedef struct {
+  struct atom* head;
+  struct atom* atom;
+} t_list;
+
 #endif

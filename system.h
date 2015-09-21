@@ -1,21 +1,15 @@
+#ifndef __SYSTEM_H
+#define __SYSTEM_H
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdbool.h>
+#include "expressions.h"
 #include "objects.h"
 #include "types.h"
 
 int LINE_NUMBER;
 char* CURRENT_TOKEN;
-
-struct atom {
-  t_object* value;
-  struct atom* next;
-};
-
-typedef struct {
-  struct atom* head;
-  struct atom* atom;
-} t_list;
 
 struct t_symboltable_row{
   t_object* object;
@@ -25,7 +19,7 @@ struct t_symboltable_row{
   struct node* node;
   t_list* formal_parameters;
   struct t_symboltable_row* next;
-} ;
+};
 
 typedef struct {
   struct t_symboltable_row* tail;
@@ -76,3 +70,5 @@ void addFunctionToSymbolTable(t_symboltable* symboltable, char*, struct node *no
 void addObjectToSymbolTable(t_symboltable* symboltable, t_object* symbol, t_object* object, struct node *node);
 void printSymboltable(t_symboltable* symboltable);
 t_object* getSymbolByName(t_symboltable* symboltable, char* name);
+
+#endif

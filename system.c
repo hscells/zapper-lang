@@ -1,6 +1,5 @@
-#include "system.h"
-#include "expressions.h"
 #include <string.h>
+#include "system.h"
 
 void exception(char* e, int line_number, char* token) {
   printf("An Exception was raised on line: %d, near: '%s'\n\t%s\n", line_number, token, e);
@@ -410,13 +409,6 @@ t_object* z_string(char* x) {
   obj->value->type = String;
   obj->value->value.s = x;
   return obj;
-}
-
-t_object* newSystem(t_stack* stack, t_heap* heap) {
-  t_fieldlist* fields = newFieldlist();
-  t_methodlist* methods = newMethodlist();
-  t_object* System = newObject(methods, fields);
-  return System;
 }
 
 t_symboltable* newSymbolTable() {
