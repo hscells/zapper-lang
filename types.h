@@ -10,7 +10,7 @@ struct atom;
 
 typedef struct {
   struct atom* head;
-  struct atom* atom;
+  struct atom* tail;
 } t_list;
 
 typedef union {
