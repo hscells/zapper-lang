@@ -45,6 +45,11 @@ t_generic* z_div(t_generic* a, t_generic* b) {
 }
 
 void z_print(t_object* o) {
+  if(o == NULL) {
+    printf("undefined");
+    return;
+  }
+
   switch(o->value->type) {
     case Int:
       printf("%d", o->value->value.i);
@@ -445,40 +450,55 @@ t_symboltable* newSymbolTable() {
   return s;
 }
 
-void addFunctionToSymbolTable(t_symboltable* symboltable, char* name, struct node *node, t_list* formal_parameters) {
+void addFunctionToSymbolTable(t_symboltable* s, char* name, struct node *node, t_list* formal_parameters) {
   struct t_symboltable_row* row = (struct t_symboltable_row*) malloc(sizeof(struct t_symboltable_row));
   row->object = newObject();
   row->id = row->object->id;
   row->node = node;
   row->formal_parameters = formal_parameters;
-  if (symboltable->head == NULL) {
-    symboltable->head = row;
-    symboltable->row = row;
+  if (s->head == NULL) {
+    s->head = row;
   } else {
-    symboltable->row->next = row;
+    s->tail->next = row;
+    s->tail = row;
   }
 }
 
-void addObjectToSymbolTable(t_symboltable* symboltable, char* name, t_object* object, struct node *node) {
+void addObjectToSymbolTable(t_symboltable* s, char* name, t_object* object, struct node *node) {
   struct t_symboltable_row* row = (struct t_symboltable_row*) malloc(sizeof(struct t_symboltable_row));
   row->name = name;
-  row->id = object->id;
-  row->object = object;
-  if (symboltable->head == NULL) {
-    symboltable->head = row;
-    symboltable->row = row;
+  row->node = node;
+  if (object != NULL) {
+    row->object = object;
+    row->id = object->id;
+  }
+  row->next = NULL;
+
+  if (s->head == NULL) {
+    s->head = row;
+    s->tail = row;
   } else {
-    symboltable->row->next = row;
+    s->tail->next = row;
+    s->tail = row;
   }
 }
 
-t_object* getSymbolByName(t_symboltable* symboltable, char* name) {
-  symboltable->row = symboltable->head;
-  while (symboltable->row != NULL) {
-    if (strcmp(symboltable->row->name, name) == 0) {
-      return symboltable->row->object;
+void printSymboltable(t_symboltable* s) {
+  struct t_symboltable_row* r = s->head;
+  printf("Current Symboltable:\n");
+  while(r != NULL) {
+    printf("\tobject name: %s\n", r->name);
+    r = r->next;
+  }
+}
+
+t_object* getSymbolByName(t_symboltable* s, char* name) {
+  struct t_symboltable_row* r = s->head;
+  while (r != NULL) {
+    if (strcmp(r->name, name) == 0) {
+      return r->object;
     }
-    symboltable->row = symboltable->row->next;
+    r = r->next;
   }
   exception("Object has no value",-1, name);
   return NULL;

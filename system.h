@@ -27,7 +27,7 @@ struct t_symboltable_row{
 } ;
 
 typedef struct {
-  struct t_symboltable_row* row;
+  struct t_symboltable_row* tail;
   struct t_symboltable_row* head;
   t_stack* stack;
   int current;
@@ -67,7 +67,10 @@ int z_length(t_list* list);
 
 t_object* z_int(int x);
 
+t_generic* z_eval(char* expressions, t_stack* stack, t_heap* heap);
+
 t_symboltable* newSymbolTable();
 void addFunctionToSymbolTable(t_symboltable* symboltable, char*, struct node *node, t_list* formal_parameters);
 void addObjectToSymbolTable(t_symboltable* symboltable, char* name, t_object* object, struct node *node);
+void printSymboltable(t_symboltable* symboltable);
 t_object* getSymbolByName(t_symboltable* symboltable, char* name);
