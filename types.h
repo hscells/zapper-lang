@@ -6,12 +6,20 @@
 
 enum t_type { Int, Float, Char, String, Bool, List, Exception, Function, Symbol};
 
+struct atom;
+
+typedef struct {
+  struct atom* head;
+  struct atom* atom;
+} t_list;
+
 typedef union {
   int     i;
   char    c;
   char*   s;
   double  f;
   bool    b;
+  t_list* l;
 } t_generic_value;
 
 typedef struct {
@@ -28,10 +36,5 @@ struct atom {
   t_object* value;
   struct atom* next;
 };
-
-typedef struct {
-  struct atom* head;
-  struct atom* atom;
-} t_list;
 
 #endif
