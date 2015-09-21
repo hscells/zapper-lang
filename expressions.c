@@ -3,11 +3,12 @@
 #include <strings.h>
 #include <stdbool.h>
 #include "expressions.h"
+#include "system.h"
 
 #define EOL '\n'
 
 #define NUMBERS "1234567890"
-#define CHARACTERS "_abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+#define CHARACTERS "!?-_abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 #define PRECISION "."
 
 #define MIN_BUILTIN 0xa000
@@ -388,6 +389,7 @@ t_ast* parse(char* e, t_stack* stack, t_heap* heap, int index) {
     }
 
   }
+  ast->tail = ast->node;
   ast->node->next = NULL;
   return ast;
 }
@@ -437,7 +439,7 @@ t_list* getList(t_ast* ast) {
   return list;
 }
 
-t_object* eval(t_ast *ast) {
+t_object* eval(t_ast *ast, t_symboltable* symboltable) {
   t_object* value;
   t_list* params;
   int paren_count = 0;
@@ -451,7 +453,7 @@ t_object* eval(t_ast *ast) {
 
   node = ast->head;
   printf("new eval stack\n");
-  while(node != NULL){
+  while(node != NULL & node != ast->tail){
     printf("token : %d\n", node->token);
     // printf("%d\n", node->token);
     // make sure there isn't a mismatched paren
@@ -524,14 +526,14 @@ t_object* eval(t_ast *ast) {
           }
         } else if(current_function == ast->system->PRINT) {
           if (z_length(params) == 1) {
-            z_print(params->head->value);
+            z_print(params->head->value, symboltable);
             return value;
           } else {
             exception("Wrong number of arguments, function expects 1", node->line_num, "print");
           }
         } else if(current_function == ast->system->PRINTLN) {
           if (z_length(params) == 1) {
-            z_println(params->head->value);
+            z_println(params->head->value, symboltable);
             return value;
           } else {
             exception("Wrong number of arguments, function expects 1", node->line_num, "println");
@@ -548,14 +550,6 @@ t_object* eval(t_ast *ast) {
       }
     }
 
-    // if we see a left curl, stop evaluating, if we see a right curl, also stop evaluating
-    // stop on a left because we need something to separate the execution
-    // stop on a right because we need to stop execution
-    // braces act as an expression body
-    if (node->token == ast->tokens->LCURL || node->token == ast->tokens->RCURL){
-      return value;
-    }
-
     /**
      * Logic for a return
      * return(EXPRESSION)
@@ -564,7 +558,7 @@ t_object* eval(t_ast *ast) {
     if (node->token == ast->tokens->RETURN) {
       t_ast* newast = newAst();
       newast->head = node->next->next;
-      value = eval(newast);
+      value = eval(newast, symboltable);
     }
 
     /**
@@ -634,13 +628,65 @@ t_object* eval(t_ast *ast) {
       t_ast* tmp_ast = newAst();
       tmp_ast->head = node;
       t_list* args = getList(tmp_ast);
-      addFunctionToSymbolTable(symboltable, z_nth(args, 0)->value->value.s, node, z_rest(args));
+      z_nth(args,0)->value->type = Function;
+
+      struct node* start_node;
+
+      // move over the ast up until the first comma (parameters)
+      while((node = node->next) != NULL && node->token != ast->tokens->COMMA);
+      t_ast* param_ast = newAst();
+      param_ast->head = node;
+      t_list* params = getList(param_ast);
+      printf("param length: %d\n",z_length(params));
       while (node->token != ast->tokens->RBRAC) {
         node = node->next;
       }
 
+      start_node = node->next->next;
+
+      // now just ignore everything else (the statements) until the end of the function definition
+      int depth = 1;
+      struct node* n = node;
+      bool cond = true;
+      while (cond & ((n = n->next) != NULL)) {
+        if (n->token == ast->tokens->LBRAC) {
+          depth++;
+        } else if (n->token == ast->tokens->RBRAC) {
+          depth--;
+          if (depth == 0) {
+            cond = false;
+          }
+        }
+      }
+
+      // set the node pointer to the end of the function definition
+      node = n;
+      // we now have all the information needed for an insertion to the symboltable
+      addFunctionToSymbolTable(symboltable, z_nth(args, 0), start_node, node, params);
+
       printf("function name: %s\n", z_nth(args,0)->value->value.s);
       // printf("number of args: %d\n", z_length(z_nth(args,1)));
+    }
+
+    if (node->object != NULL && z_typeof(node->object) == Symbol) {
+      if (inSymboltable(symboltable, node->object) && z_typeof(getSymbolByName(symboltable, node->object)) == Function) {
+        printf("Found a function invocation!\n");
+        t_ast* fn_ast = newAst();
+        t_ast* param_ast = newAst();
+        param_ast->head = node;
+        fn_ast = getFunctionAst(symboltable, node->object);
+        t_list* formal_parameters = getFunctionParams(symboltable, node->object);
+        t_list* actual_parameters = getList(param_ast);
+        if (z_length(formal_parameters) == z_length(actual_parameters)) {
+          t_symboltable* s = newSymbolTable();
+          for(int i = 0; i < z_length(formal_parameters); i++) {
+            addObjectToSymbolTable(s, z_nth(formal_parameters,i), z_nth(actual_parameters,i), node);
+          }
+          value = eval(fn_ast, s);
+        } else {
+          exception("Actual parameters do not match formal parameter list",node->line_num,node->object->value->value.s);
+        }
+      }
     }
 
     /**
@@ -693,17 +739,17 @@ t_object* eval(t_ast *ast) {
       }
       t_ast* newast = newAst();
       newast->head = predicate;
-      t_object* result = eval(newast);
+      t_object* result = eval(newast, symboltable);
       if (result->value->value.b == true) {
         // we know the predicate evaluated to true, so skip to that node
         // evaluate everything inside that expression body
         newast->head = function1;
-        value = eval(newast);
+        value = eval(newast, symboltable);
       } else {
         // the predicate evaluated to false, so skip to the second expression body
         // evaluate the second expression body
         newast->head = function2;
-        value = eval(newast);
+        value = eval(newast, symboltable);
       }
       // skip to the end of the if body
       node = last_node;
@@ -720,7 +766,7 @@ t_object* eval(t_ast *ast) {
         t_object* param = newObject();
         t_ast* newast = newAst();
         newast->head = node->next;
-        param = eval(newast);
+        param = eval(newast, symboltable);
         z_conj(params, param);
         while (node->token != ast->tokens->RBRAC) {
           node = node->next;
@@ -730,21 +776,19 @@ t_object* eval(t_ast *ast) {
         // this will evaluate a builtin function and record it's value
         t_ast* newast = newAst();
         newast->head = node->next;
-        value = eval(newast);
+        value = eval(newast, symboltable);
         while (node->next->token != ast->tokens->RBRAC) {
           node = node->next;
         }
         current_function = 0;
         // free(newast);
       }
-    } else if (node->token == ast->tokens->OBJECT && node->object->value->type == Function) {
-      //do something with the symbol table!
     } else if (node->token == ast->tokens->OBJECT) {
       // we know that this must be just a plain old object now
       if (inside_actual_parameters) {
         // if the ast is inside a parameter list, add the object to that list
         if(z_typeof(node->object)== Symbol) {
-          z_conj(params, getSymbolByName(symboltable, node->object->value->value.s));
+          z_conj(params, getSymbolByName(symboltable, node->object));
         } else {
           z_conj(params, node->object);
         }
