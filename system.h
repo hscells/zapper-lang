@@ -67,6 +67,7 @@ t_object* z_nth(t_list* list, int index);
 int z_length(t_list* list);
 
 t_object* z_int(int x);
+t_object* z_string(char* x);
 
 t_object* z_eval(char* expressions, t_stack* stack, t_heap* heap);
 

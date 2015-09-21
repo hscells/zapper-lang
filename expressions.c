@@ -206,6 +206,31 @@ t_ast* parse(char* e, t_stack* stack, t_heap* heap, int index) {
 
     ast->node->line_num = ast->line_count;
 
+    // parse string objects
+    if (c == '"') {
+      // need to do this twice.
+      c = e[i++];
+      c = e[i++];
+      // for whatever c = e[i+=2] won't work...
+
+      char* string = malloc(sizeof(char) * 255);
+      int ch = 0;
+      t_object* obj = newObject();
+
+      obj->value->type = String;
+      while(c != '"') {
+        string[ch] = c;
+        c = e[i++];
+        ch++;
+      }
+
+      string[ch] = '\0';
+      obj->value->value.s = string;
+      ast->node->next = newObjectNode(obj, ast);
+      ast->node = ast->node->next;
+      c = e[i];
+    }
+
     // add individual tokens to the ast
     if (c == '(') {
       ast->node->next = newTokenNode(ast->tokens->LBRAC, ast);
@@ -252,7 +277,6 @@ t_ast* parse(char* e, t_stack* stack, t_heap* heap, int index) {
     }
 
     c = e[--i];
-
     // printf ("tok is: %s, c is: %c\n", tok, c);
 
     if (strlen(tok) > 0) {
@@ -353,13 +377,6 @@ t_ast* parse(char* e, t_stack* stack, t_heap* heap, int index) {
             break;
           // strings and symbols are a little more tricky, because of pointers
           // so we need to allocate space for the new char*
-          case String:
-            copy = malloc(strlen(tok) + 1);
-            strcpy(copy, tok);
-            obj->value->type = Symbol;
-            obj->value->value.s = copy;
-            ast->node->next = newObjectNode(obj, ast);
-            break;
           case Symbol:
             copy = malloc(strlen(tok) + 1);
             strcpy(copy, tok);
@@ -374,9 +391,7 @@ t_ast* parse(char* e, t_stack* stack, t_heap* heap, int index) {
     }
 
   }
-
   ast->node->next = NULL;
-
   return ast;
 }
 
@@ -623,6 +638,9 @@ t_object* eval(t_ast *ast) {
       tmp_ast->head = node;
       t_list* args = getList(tmp_ast);
       addFunctionToSymbolTable(symboltable, z_nth(args, 0)->value->value.s, node, z_rest(args));
+      while (node->token != ast->tokens->RBRAC) {
+        node = node->next;
+      }
     }
 
     /**

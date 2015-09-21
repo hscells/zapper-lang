@@ -77,7 +77,7 @@ void z_print(t_object* o) {
       printf("%c", o->value->value.c);
       return;
     case String:
-      printf("%s", o->value->value.s);
+      printf("%s",o->value->value.s);
       return;
     case Bool:
       printf("%d", o->value->value.b);
@@ -401,7 +401,14 @@ t_object* z_eval(char* expressions, t_stack* stack, t_heap* heap) {
 t_object* z_int(int x) {
   t_object* obj = newObject();
   obj->value->type = Int;
-  obj->value->value = (t_generic_value) x;
+  obj->value->value.i = x;
+  return obj;
+}
+
+t_object* z_string(char* x) {
+  t_object* obj = newObject();
+  obj->value->type = String;
+  obj->value->value.s = x;
   return obj;
 }
 
