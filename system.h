@@ -4,9 +4,9 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdbool.h>
-#include "expressions.h"
 #include "objects.h"
 #include "types.h"
+#include "expressions.h"
 
 int LINE_NUMBER;
 char* CURRENT_TOKEN;
@@ -16,7 +16,8 @@ struct t_symboltable_row{
   t_object* symbol;
   char* name;
   int id;
-  struct node* node;
+  struct node* start_node;
+  struct node* end_node;
   t_list* formal_parameters;
   struct t_symboltable_row* next;
 };
@@ -28,13 +29,12 @@ typedef struct {
   int current;
 } t_symboltable;
 
-t_symboltable *symboltable;
 struct node *native_code;
 
 t_generic* newGeneric();
 
-void z_print(t_object* o);
-void z_println(t_object* o);
+void z_print(t_object* o, t_symboltable* s);
+void z_println(t_object* o, t_symboltable* s);
 t_object* z_read();
 
 enum t_type z_typeof(t_object* o);
@@ -63,12 +63,17 @@ int z_length(t_list* list);
 t_object* z_int(int x);
 t_object* z_string(char* x);
 
-t_object* z_eval(char* expressions, t_stack* stack, t_heap* heap);
+t_object* z_eval(char* expressions, t_stack* stack, t_heap* heap, t_symboltable* s);
 
 t_symboltable* newSymbolTable();
-void addFunctionToSymbolTable(t_symboltable* symboltable, char*, struct node *node, t_list* formal_parameters);
+void addFunctionToSymbolTable(t_symboltable* symboltable, t_object* symbol, struct node *start_node, struct node *end_node, t_list* formal_parameters);
 void addObjectToSymbolTable(t_symboltable* symboltable, t_object* symbol, t_object* object, struct node *node);
 void printSymboltable(t_symboltable* symboltable);
-t_object* getSymbolByName(t_symboltable* symboltable, char* name);
+bool inSymboltable(t_symboltable* s, t_object* o);
+t_object* getSymbolByName(t_symboltable* symboltable, t_object* o);
+t_ast* getFunctionAst(t_symboltable* symboltable, t_object* o);
+t_list* getFunctionParams(t_symboltable* symboltable, t_object* o);
 
+// eval is defined here because it relis on the symboltable object
+t_object* eval(t_ast *ast, t_symboltable* symboltable);
 #endif
