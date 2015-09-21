@@ -120,19 +120,19 @@ t_object* z_eq(t_object* a, t_object* b) {
   if(z_typeof(a) == z_typeof(b)) {
     switch(z_typeof(a)) {
       case Int:
-        result->value->value = (t_generic_value) (a->value->value.i == a->value->value.i);
+        result->value->value = (t_generic_value) (a->value->value.i == b->value->value.i);
         break;
       case Float:
-        result->value->value = (t_generic_value) (a->value->value.f == a->value->value.f);
+        result->value->value = (t_generic_value) (a->value->value.f == b->value->value.f);
         break;
       case Char:
-        result->value->value = (t_generic_value) (a->value->value.c == a->value->value.c);
+        result->value->value = (t_generic_value) (a->value->value.c == b->value->value.c);
         break;
       case String:
-        result->value->value = (t_generic_value) (a->value->value.s == a->value->value.s);
+        result->value->value = (t_generic_value) (a->value->value.s == b->value->value.s);
         break;
       case Bool:
-        result->value->value = (t_generic_value) (a->value->value.b == a->value->value.b);
+        result->value->value = (t_generic_value) (a->value->value.b == b->value->value.b);
         break;
       case List:
         exception("List comparison not yet implemented.",-1,NULL);
@@ -159,19 +159,19 @@ t_object* z_lt(t_object* a, t_object* b) {
   if(z_typeof(a) == z_typeof(b)) {
     switch(z_typeof(a)) {
       case Int:
-        result->value->value = (t_generic_value) (a->value->value.i < a->value->value.i);
+        result->value->value = (t_generic_value) (a->value->value.i < b->value->value.i);
         break;
       case Float:
-        result->value->value = (t_generic_value) (a->value->value.f < a->value->value.f);
+        result->value->value = (t_generic_value) (a->value->value.f < b->value->value.f);
         break;
       case Char:
-        result->value->value = (t_generic_value) (a->value->value.c < a->value->value.c);
+        result->value->value = (t_generic_value) (a->value->value.c < b->value->value.c);
         break;
       case String:
-        result->value->value = (t_generic_value) (a->value->value.s < a->value->value.s);
+        result->value->value = (t_generic_value) (a->value->value.s < b->value->value.s);
         break;
       case Bool:
-        result->value->value = (t_generic_value) (a->value->value.b < a->value->value.b);
+        result->value->value = (t_generic_value) (a->value->value.b < b->value->value.b);
         break;
       case List:
         exception("List comparison not yet implemented.",-1,NULL);
@@ -198,19 +198,19 @@ t_object* z_gt(t_object* a, t_object* b) {
   if(z_typeof(a) == z_typeof(b)) {
     switch(z_typeof(a)) {
       case Int:
-        result->value->value = (t_generic_value) (a->value->value.i > a->value->value.i);
+        result->value->value = (t_generic_value) (a->value->value.i > b->value->value.i);
         break;
       case Float:
-        result->value->value = (t_generic_value) (a->value->value.f > a->value->value.f);
+        result->value->value = (t_generic_value) (a->value->value.f > b->value->value.f);
         break;
       case Char:
-        result->value->value = (t_generic_value) (a->value->value.c > a->value->value.c);
+        result->value->value = (t_generic_value) (a->value->value.c > b->value->value.c);
         break;
       case String:
-        result->value->value = (t_generic_value) (a->value->value.s > a->value->value.s);
+        result->value->value = (t_generic_value) (a->value->value.s > b->value->value.s);
         break;
       case Bool:
-        result->value->value = (t_generic_value) (a->value->value.b > a->value->value.b);
+        result->value->value = (t_generic_value) (a->value->value.b > b->value->value.b);
         break;
       case List:
         exception("List comparison not yet implemented.",-1,NULL);
@@ -237,19 +237,19 @@ t_object* z_lteq(t_object* a, t_object* b) {
   if(z_typeof(a) == z_typeof(b)) {
     switch(z_typeof(a)) {
       case Int:
-        result->value->value = (t_generic_value) (a->value->value.i <= a->value->value.i);
+        result->value->value = (t_generic_value) (a->value->value.i <= b->value->value.i);
         break;
       case Float:
-        result->value->value = (t_generic_value) (a->value->value.f <= a->value->value.f);
+        result->value->value = (t_generic_value) (a->value->value.f <= b->value->value.f);
         break;
       case Char:
-        result->value->value = (t_generic_value) (a->value->value.c <= a->value->value.c);
+        result->value->value = (t_generic_value) (a->value->value.c <= b->value->value.c);
         break;
       case String:
-        result->value->value = (t_generic_value) (a->value->value.s <= a->value->value.s);
+        result->value->value = (t_generic_value) (a->value->value.s <= b->value->value.s);
         break;
       case Bool:
-        result->value->value = (t_generic_value) (a->value->value.b <= a->value->value.b);
+        result->value->value = (t_generic_value) (a->value->value.b <= b->value->value.b);
         break;
       case List:
         exception("List comparison not yet implemented.",-1,NULL);
@@ -276,19 +276,19 @@ t_object* z_gteq(t_object* a, t_object* b){
   if(z_typeof(a) == z_typeof(b)) {
     switch(z_typeof(a)) {
       case Int:
-        result->value->value = (t_generic_value) (a->value->value.i >= a->value->value.i);
+        result->value->value = (t_generic_value) (a->value->value.i >= b->value->value.i);
         break;
       case Float:
-        result->value->value = (t_generic_value) (a->value->value.f >= a->value->value.f);
+        result->value->value = (t_generic_value) (a->value->value.f >= b->value->value.f);
         break;
       case Char:
-        result->value->value = (t_generic_value) (a->value->value.c >= a->value->value.c);
+        result->value->value = (t_generic_value) (a->value->value.c >= b->value->value.c);
         break;
       case String:
-        result->value->value = (t_generic_value) (a->value->value.s >= a->value->value.s);
+        result->value->value = (t_generic_value) (a->value->value.s >= b->value->value.s);
         break;
       case Bool:
-        result->value->value = (t_generic_value) (a->value->value.b >= a->value->value.b);
+        result->value->value = (t_generic_value) (a->value->value.b >= b->value->value.b);
         break;
       case List:
         exception("List comparison not yet implemented.",-1,NULL);
