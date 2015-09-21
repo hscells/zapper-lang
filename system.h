@@ -40,23 +40,23 @@ t_generic* newGeneric();
 
 void z_print(t_object* o);
 void z_println(t_object* o);
-t_generic* z_read();
+t_object* z_read();
 
 enum t_type z_typeof(t_object* o);
 void exception(char* e, int line_num, char* token);
 void z_exception(char* e);
 
-t_generic* z_add(t_generic* a, t_generic* b);
-t_generic* z_sub(t_generic* a, t_generic* b);
-t_generic* z_mul(t_generic* a, t_generic* b);
-t_generic* z_div(t_generic* a, t_generic* b);
+t_object* z_add(t_object* a, t_object* b);
+t_object* z_sub(t_object* a, t_object* b);
+t_object* z_mul(t_object* a, t_object* b);
+t_object* z_div(t_object* a, t_object* b);
 
-t_generic* z_teq(t_object* a, t_object* b);
-t_generic* z_eq(t_object* a, t_object* b);
-t_generic* z_lt(t_object* a, t_object* b);
-t_generic* z_gt(t_object* a, t_object* b);
-t_generic* z_lteq(t_object* a, t_object* b);
-t_generic* z_gteq(t_object* a, t_object* b);
+t_object* z_teq(t_object* a, t_object* b);
+t_object* z_eq(t_object* a, t_object* b);
+t_object* z_lt(t_object* a, t_object* b);
+t_object* z_gt(t_object* a, t_object* b);
+t_object* z_lteq(t_object* a, t_object* b);
+t_object* z_gteq(t_object* a, t_object* b);
 
 t_list* z_list();
 void z_conj(t_list* list, t_object* o);
@@ -67,7 +67,7 @@ int z_length(t_list* list);
 
 t_object* z_int(int x);
 
-t_generic* z_eval(char* expressions, t_stack* stack, t_heap* heap);
+t_object* z_eval(char* expressions, t_stack* stack, t_heap* heap);
 
 t_symboltable* newSymbolTable();
 void addFunctionToSymbolTable(t_symboltable* symboltable, char*, struct node *node, t_list* formal_parameters);

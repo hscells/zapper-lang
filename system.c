@@ -16,31 +16,47 @@ t_generic* newGeneric() {
   return (t_generic*) malloc(sizeof(t_generic));
 }
 
-t_generic* z_add(t_generic* a, t_generic* b) {
-  t_generic* result = newGeneric();
-  result->value = (t_generic_value) (a->value.i + b->value.i);
-  result->type = Int;
+t_object* z_add(t_object* a, t_object* b) {
+  t_object* result = newObject();
+  if(z_typeof(a) == z_typeof(b) && z_typeof(a) == Int) {
+    result->value->value = (t_generic_value) (a->value->value.i + b->value->value.i);
+    result->value->type = Int;
+  } else {
+    exception("Type mismatch", -1, NULL);
+  }
   return result;
 }
 
-t_generic* z_sub(t_generic* a, t_generic* b) {
-  t_generic* result = newGeneric();
-  result->value = (t_generic_value) (a->value.i - b->value.i);
-  result->type = Int;
+t_object* z_sub(t_object* a, t_object* b) {
+  t_object* result = newObject();
+  if(z_typeof(a) == z_typeof(b) && z_typeof(a) == Int) {
+    result->value->value = (t_generic_value) (a->value->value.i - b->value->value.i);
+    result->value->type = Int;
+  } else {
+    exception("Type mismatch", -1, NULL);
+  }
   return result;
 }
 
-t_generic* z_mul(t_generic* a, t_generic* b) {
-  t_generic* result = newGeneric();
-  result->value = (t_generic_value) (a->value.i * b->value.i);
-  result->type = Int;
+t_object* z_mul(t_object* a, t_object* b) {
+  t_object* result = newObject();
+  if(z_typeof(a) == z_typeof(b) && z_typeof(a) == Int) {
+    result->value->value = (t_generic_value) (a->value->value.i * b->value->value.i);
+    result->value->type = Int;
+  } else {
+    exception("Type mismatch", -1, NULL);
+  }
   return result;
 }
 
-t_generic* z_div(t_generic* a, t_generic* b) {
-  t_generic* result = newGeneric();
-  result->value = (t_generic_value) (a->value.i / b->value.i);
-  result->type = Int;
+t_object* z_div(t_object* a, t_object* b) {
+  t_object* result = newObject();
+  if(z_typeof(a) == z_typeof(b) && z_typeof(a) == Int) {
+    result->value->value = (t_generic_value) (a->value->value.i / b->value->value.i);
+    result->value->type = Int;
+  } else {
+    exception("Type mismatch", -1, NULL);
+  }
   return result;
 }
 
@@ -91,252 +107,204 @@ enum t_type z_typeof(t_object* o) {
   return o->value->type;
 }
 
-t_generic* z_teq(t_object* a, t_object* b) {
-  t_generic* result = newGeneric();
-  result->type = Bool;
-  result->value = (t_generic_value) (z_typeof(a) == z_typeof(b));
+t_object* z_teq(t_object* a, t_object* b) {
+  t_object* result = newObject();
+  result->value->type = Bool;
+  result->value->value = (t_generic_value) (z_typeof(a) == z_typeof(b));
   return result;
 }
 
-t_generic* z_eq(t_object* a, t_object* b) {
-  t_generic* result = newGeneric();
-  result->type = Bool;
-  result->value = (t_generic_value) false;
-
-  t_generic* teq;
-  teq = z_teq(a,b);
-  if (!teq->value.b) {
-    result->type = Exception;
-    result->value = (t_generic_value) "Parameter types do not match.";
-    return result;
-  }
-  switch(a->value->type) {
-    case Int:
-      result->value = (t_generic_value) (a->value->value.i == b->value->value.i);
-      break;
-    case Float:
-      result->value = (t_generic_value) (a->value->value.f == b->value->value.f);
-      break;
-    case Char:
-      result->value = (t_generic_value) (a->value->value.c == b->value->value.c);
-      break;
-    case String:
-      result->value = (t_generic_value) (strcmp(a->value->value.s, b->value->value.s) == 0);
-      break;
-    case Bool:
-      result->value = (t_generic_value) (a->value->value.b == b->value->value.b);
-    case List:
-      result->type = Exception;
-      result->value = (t_generic_value) "Could not compare Lists.";
-      break;
-    case Exception:
-      result->type = Exception;
-      result->value = (t_generic_value) "Could not compare Exceptions.";
-      break;
-    case Function:
-      result->type = Exception;
-      result->value = (t_generic_value) "Could not compare Functions.";
-      break;
-    case Symbol:
-      result->value = (t_generic_value) (strcmp(a->value->value.s, b->value->value.s) == 0);
-      break;
-  }
-  return result;
-}
-t_generic* z_lt(t_object* a, t_object* b) {
-  t_generic* result = newGeneric();
-  result->type = Bool;
-  result->value = (t_generic_value) false;
-
-  t_generic* teq;
-  teq = z_teq(a,b);
-  if (!teq->value.b) {
-    result->type = Exception;
-    result->value = (t_generic_value) "Parameter types do not match.";
-    return result;
-  }
-
-  switch(a->value->type) {
-    case Int:
-      result->value = (t_generic_value) (a->value->value.i < b->value->value.i);
-      break;
-    case Float:
-      result->value = (t_generic_value) (a->value->value.f < b->value->value.f);
-      break;
-    case Char:
-      result->value = (t_generic_value) (a->value->value.c < b->value->value.c);
-      break;
-    case String:
-      result->value = (t_generic_value) (strcmp(a->value->value.s,b->value->value.s) < 0);
-      break;
-    case Bool:
-      result->type = Exception;
-      result->value = (t_generic_value) "Could not compare Bools.";
-      break;
-    case List:
-      result->type = Exception;
-      result->value = (t_generic_value) "Could not compare Lists.";
-      break;
-    case Exception:
-      result->type = Exception;
-      result->value = (t_generic_value) "Could not compare Exceptions.";
-      break;
-    case Function:
-      result->type = Exception;
-      result->value = (t_generic_value) "Could not compare Functions.";
-      break;
-    case Symbol:
-      result->type = Exception;
-      result->value = (t_generic_value) "Could not compare Symbols.";
-      break;
-  }
-  return result;
-}
-t_generic* z_gt(t_object* a, t_object* b) {
-  t_generic* result = newGeneric();
-  result->type = Bool;
-  result->value = (t_generic_value) false;
-
-  t_generic* teq;
-  teq = z_teq(a,b);
-  if (!teq->value.b) {
-    result->type = Exception;
-    result->value = (t_generic_value) "Parameter types do not match.";
-    return result;
-  }
-
-  switch(a->value->type) {
-    case Int:
-      result->value = (t_generic_value) (a->value->value.i > b->value->value.i);
-      break;
-    case Float:
-      result->value = (t_generic_value) (a->value->value.f > b->value->value.f);
-      break;
-    case Char:
-      result->value = (t_generic_value) (a->value->value.c > b->value->value.c);
-      break;
-    case String:
-      result->value = (t_generic_value) (strcmp(a->value->value.s,b->value->value.s) > 0);
-      break;
-    case Bool:
-      result->type = Exception;
-      result->value = (t_generic_value) "Could not compare Bools.";
-      break;
-    case List:
-      result->type = Exception;
-      result->value = (t_generic_value) "Could not compare Lists.";
-      break;
-    case Exception:
-      result->type = Exception;
-      result->value = (t_generic_value) "Could not compare Exceptions.";
-      break;
-    case Function:
-      result->type = Exception;
-      result->value = (t_generic_value) "Could not compare Functions.";
-      break;
-    case Symbol:
-      result->type = Exception;
-      result->value = (t_generic_value) "Could not compare Symbols.";
-      break;
-  }
-  return result;
-}
-t_generic* z_lteq(t_object* a, t_object* b) {
-  t_generic* result = newGeneric();
-  result->type = Bool;
-  result->value = (t_generic_value) false;
-
-  t_generic* teq;
-  teq = z_teq(a,b);
-  if (!teq->value.b) {
-    result->type = Exception;
-    result->value = (t_generic_value) "Parameter types do not match.";
-    return result;
-  }
-
-  switch(a->value->type) {
-    case Int:
-      result->value = (t_generic_value) (a->value->value.i <= b->value->value.i);
-      break;
-    case Float:
-      result->value = (t_generic_value) (a->value->value.f <= b->value->value.f);
-      break;
-    case Char:
-      result->value = (t_generic_value) (a->value->value.c <= b->value->value.c);
-      break;
-    case String:
-      result->value = (t_generic_value) (strcmp(a->value->value.s,b->value->value.s) <= 0);
-      break;
-    case Bool:
-      result->type = Exception;
-      result->value = (t_generic_value) "Could not compare Bools.";
-      break;
-    case List:
-      result->type = Exception;
-      result->value = (t_generic_value) "Could not compare Lists.";
-      break;
-    case Exception:
-      result->type = Exception;
-      result->value = (t_generic_value) "Could not compare Exceptions.";
-      break;
-    case Function:
-      result->type = Exception;
-      result->value = (t_generic_value) "Could not compare Functions.";
-      break;
-    case Symbol:
-      result->type = Exception;
-      result->value = (t_generic_value) "Could not compare Symbols.";
-      break;
+t_object* z_eq(t_object* a, t_object* b) {
+  t_object* result = newObject();
+  result->value->type = Bool;
+  if(z_typeof(a) == z_typeof(b)) {
+    switch(z_typeof(a)) {
+      case Int:
+        result->value->value = (t_generic_value) (a->value->value.i == a->value->value.i);
+        break;
+      case Float:
+        result->value->value = (t_generic_value) (a->value->value.f == a->value->value.f);
+        break;
+      case Char:
+        result->value->value = (t_generic_value) (a->value->value.c == a->value->value.c);
+        break;
+      case String:
+        result->value->value = (t_generic_value) (a->value->value.s == a->value->value.s);
+        break;
+      case Bool:
+        result->value->value = (t_generic_value) (a->value->value.b == a->value->value.b);
+        break;
+      case List:
+        exception("List comparison not yet implemented.",-1,NULL);
+        break;
+      case Exception:
+        exception("Exception comparison not yet implemented.",-1,NULL);
+        break;
+      case Function:
+        exception("Function comparison not yet implemented.",-1,NULL);
+        break;
+      case Symbol:
+        exception("Symbol comparison not yet implemented.",-1,NULL);
+        break;
+    }
+  } else {
+    exception("Type mismatch", -1, NULL);
   }
   return result;
 }
 
-t_generic* z_gteq(t_object* a, t_object* b){
-  t_generic* result = newGeneric();
-  result->type = Bool;
-  result->value = (t_generic_value) false;
-
-  t_generic* teq;
-  teq = z_teq(a,b);
-  if (!teq->value.b) {
-    result->type = Exception;
-    result->value = (t_generic_value) "Parameter types do not match.";
-    return result;
+t_object* z_lt(t_object* a, t_object* b) {
+  t_object* result = newObject();
+  result->value->type = Bool;
+  if(z_typeof(a) == z_typeof(b)) {
+    switch(z_typeof(a)) {
+      case Int:
+        result->value->value = (t_generic_value) (a->value->value.i < a->value->value.i);
+        break;
+      case Float:
+        result->value->value = (t_generic_value) (a->value->value.f < a->value->value.f);
+        break;
+      case Char:
+        result->value->value = (t_generic_value) (a->value->value.c < a->value->value.c);
+        break;
+      case String:
+        result->value->value = (t_generic_value) (a->value->value.s < a->value->value.s);
+        break;
+      case Bool:
+        result->value->value = (t_generic_value) (a->value->value.b < a->value->value.b);
+        break;
+      case List:
+        exception("List comparison not yet implemented.",-1,NULL);
+        break;
+      case Exception:
+        exception("Exception comparison not yet implemented.",-1,NULL);
+        break;
+      case Function:
+        exception("Function comparison not yet implemented.",-1,NULL);
+        break;
+      case Symbol:
+        exception("Symbol comparison not yet implemented.",-1,NULL);
+        break;
+    }
+  } else {
+    exception("Type mismatch", -1, NULL);
   }
+  return result;
+}
 
-  switch(a->value->type) {
-    case Int:
-      result->value = (t_generic_value) (a->value->value.i >= b->value->value.i);
-      break;
-    case Float:
-      result->value = (t_generic_value) (a->value->value.f >= b->value->value.f);
-      break;
-    case Char:
-      result->value = (t_generic_value) (a->value->value.c >= b->value->value.c);
-      break;
-    case String:
-      result->value = (t_generic_value) (strcmp(a->value->value.s,b->value->value.s) >= 0);
-      break;
-    case Bool:
-      result->type = Exception;
-      result->value = (t_generic_value) "Could not compare Bools.";
-      break;
-    case List:
-      result->type = Exception;
-      result->value = (t_generic_value) "Could not compare Lists.";
-      break;
-    case Exception:
-      result->type = Exception;
-      result->value = (t_generic_value) "Could not compare Exceptions.";
-      break;
-    case Function:
-      result->type = Exception;
-      result->value = (t_generic_value) "Could not compare Functions.";
-      break;
-    case Symbol:
-      result->type = Exception;
-      result->value = (t_generic_value) "Could not compare Symbols.";
-      break;
+t_object* z_gt(t_object* a, t_object* b) {
+  t_object* result = newObject();
+  result->value->type = Bool;
+  if(z_typeof(a) == z_typeof(b)) {
+    switch(z_typeof(a)) {
+      case Int:
+        result->value->value = (t_generic_value) (a->value->value.i > a->value->value.i);
+        break;
+      case Float:
+        result->value->value = (t_generic_value) (a->value->value.f > a->value->value.f);
+        break;
+      case Char:
+        result->value->value = (t_generic_value) (a->value->value.c > a->value->value.c);
+        break;
+      case String:
+        result->value->value = (t_generic_value) (a->value->value.s > a->value->value.s);
+        break;
+      case Bool:
+        result->value->value = (t_generic_value) (a->value->value.b > a->value->value.b);
+        break;
+      case List:
+        exception("List comparison not yet implemented.",-1,NULL);
+        break;
+      case Exception:
+        exception("Exception comparison not yet implemented.",-1,NULL);
+        break;
+      case Function:
+        exception("Function comparison not yet implemented.",-1,NULL);
+        break;
+      case Symbol:
+        exception("Symbol comparison not yet implemented.",-1,NULL);
+        break;
+    }
+  } else {
+    exception("Type mismatch", -1, NULL);
+  }
+  return result;  return result;
+}
+
+t_object* z_lteq(t_object* a, t_object* b) {
+  t_object* result = newObject();
+  result->value->type = Bool;
+  if(z_typeof(a) == z_typeof(b)) {
+    switch(z_typeof(a)) {
+      case Int:
+        result->value->value = (t_generic_value) (a->value->value.i <= a->value->value.i);
+        break;
+      case Float:
+        result->value->value = (t_generic_value) (a->value->value.f <= a->value->value.f);
+        break;
+      case Char:
+        result->value->value = (t_generic_value) (a->value->value.c <= a->value->value.c);
+        break;
+      case String:
+        result->value->value = (t_generic_value) (a->value->value.s <= a->value->value.s);
+        break;
+      case Bool:
+        result->value->value = (t_generic_value) (a->value->value.b <= a->value->value.b);
+        break;
+      case List:
+        exception("List comparison not yet implemented.",-1,NULL);
+        break;
+      case Exception:
+        exception("Exception comparison not yet implemented.",-1,NULL);
+        break;
+      case Function:
+        exception("Function comparison not yet implemented.",-1,NULL);
+        break;
+      case Symbol:
+        exception("Symbol comparison not yet implemented.",-1,NULL);
+        break;
+    }
+  } else {
+    exception("Type mismatch", -1, NULL);
+  }
+  return result;
+}
+
+t_object* z_gteq(t_object* a, t_object* b){
+  t_object* result = newObject();
+  result->value->type = Bool;
+  if(z_typeof(a) == z_typeof(b)) {
+    switch(z_typeof(a)) {
+      case Int:
+        result->value->value = (t_generic_value) (a->value->value.i >= a->value->value.i);
+        break;
+      case Float:
+        result->value->value = (t_generic_value) (a->value->value.f >= a->value->value.f);
+        break;
+      case Char:
+        result->value->value = (t_generic_value) (a->value->value.c >= a->value->value.c);
+        break;
+      case String:
+        result->value->value = (t_generic_value) (a->value->value.s >= a->value->value.s);
+        break;
+      case Bool:
+        result->value->value = (t_generic_value) (a->value->value.b >= a->value->value.b);
+        break;
+      case List:
+        exception("List comparison not yet implemented.",-1,NULL);
+        break;
+      case Exception:
+        exception("Exception comparison not yet implemented.",-1,NULL);
+        break;
+      case Function:
+        exception("Function comparison not yet implemented.",-1,NULL);
+        break;
+      case Symbol:
+        exception("Symbol comparison not yet implemented.",-1,NULL);
+        break;
+    }
+  } else {
+    exception("Type mismatch", -1, NULL);
   }
   return result;
 }
@@ -345,8 +313,8 @@ void z_exit() {
   exit(1);
 }
 
-t_generic* z_read() {
-  t_generic* result = newGeneric();
+t_object* z_read() {
+  t_object* result = newObject();
   return result;
 }
 
@@ -424,7 +392,7 @@ int z_length(t_list* list) {
   return length;
 }
 
-t_generic* z_eval(char* expressions, t_stack* stack, t_heap* heap) {
+t_object* z_eval(char* expressions, t_stack* stack, t_heap* heap) {
   t_ast* ast = newAst();
   ast = parse(expressions, stack, heap, 0);
   return eval(ast);

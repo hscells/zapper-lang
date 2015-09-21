@@ -423,8 +423,8 @@ t_list* getList(t_ast* ast) {
   return list;
 }
 
-t_generic* eval(t_ast *ast) {
-  t_generic* value;
+t_object* eval(t_ast *ast) {
+  t_object* value;
   t_list* params;
   int paren_count = 0;
 
@@ -456,25 +456,25 @@ t_generic* eval(t_ast *ast) {
 
         } else if(current_function == ast->system->ADD) { // otherwise evaluate a builtin
           if (z_length(params) == 2) {
-            return z_add(params->head->value->value, params->head->next->value->value);
+            return z_add(params->head->value, params->head->next->value);
           } else {
             exception("Wrong number of arguments, function expects 2", node->line_num, "+");
           }
         } else if(current_function == ast->system->SUB) {
           if (z_length(params) == 2) {
-            return z_sub(params->head->value->value, params->head->next->value->value);
+            return z_sub(params->head->value, params->head->next->value);
           } else {
             exception("Wrong number of arguments, function expects 2", node->line_num, "-");
           }
         } else if(current_function == ast->system->MUL) {
           if (z_length(params) == 2) {
-            return z_mul(params->head->value->value, params->head->next->value->value);
+            return z_mul(params->head->value, params->head->next->value);
           } else {
             exception("Wrong number of arguments, function expects 2", node->line_num, "*");
           }
         } else if(current_function == ast->system->DIV) {
           if (z_length(params) == 2) {
-            return z_div(params->head->value->value, params->head->next->value->value);
+            return z_div(params->head->value, params->head->next->value);
           } else {
             exception("Wrong number of arguments, function expects 2", node->line_num, "/");
           }
@@ -637,8 +637,8 @@ t_generic* eval(t_ast *ast) {
       }
       t_ast* newast = newAst();
       newast->head = predicate;
-      t_generic* result = eval(newast);
-      if (result->value.b == true) {
+      t_object* result = eval(newast);
+      if (result->value->value.b == true) {
         // we know the predicate evaluated to true, so skip to that node
         // evaluate everything inside that expression body
         newast->head = function1;
@@ -664,7 +664,7 @@ t_generic* eval(t_ast *ast) {
         t_object* param = newObject();
         t_ast* newast = newAst();
         newast->head = node->next;
-        param->value = eval(newast);
+        param = eval(newast);
         z_conj(params, param);
         while (node->token != ast->tokens->RBRAC) {
           node = node->next;
