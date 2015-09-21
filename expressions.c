@@ -559,8 +559,20 @@ t_generic* eval(t_ast *ast) {
       t_list* args = getList(tmp_ast);
       if (z_length(args) == 2) {
         // z_println(z_nth(args,1));
-        addObjectToSymbolTable(symboltable, z_nth(args, 0)->value->value.s, z_nth(args, 1), node);
+        if (z_typeof(z_nth(args,1)) == Int){
+          addObjectToSymbolTable(symboltable, z_nth(args, 0)->value->value.s, z_nth(args, 1), node);
+        } else {
+          exception("The value being assigned to the object was not an Int", node->line_num, z_nth(args, 0)->value->value.s);
+        }
+      } else if (z_length(args) == 1) {
+        addObjectToSymbolTable(symboltable, z_nth(args, 0)->value->value.s, NULL, node);
+      } else {
+        exception("Invalid number of arguments passed to assignment", node->line_num, "int");
       }
+      while (node->token != ast->tokens->RBRAC) {
+        node = node->next;
+      }
+      printSymboltable(symboltable);
     }
 
     /**
@@ -657,7 +669,7 @@ t_generic* eval(t_ast *ast) {
         while (node->token != ast->tokens->RBRAC) {
           node = node->next;
         }
-        free(newast);
+        // free(newast);
       } else {
         // this will evaluate a builtin function and record it's value
         t_ast* newast = newAst();
@@ -667,7 +679,7 @@ t_generic* eval(t_ast *ast) {
           node = node->next;
         }
         current_function = 0;
-        free(newast);
+        // free(newast);
       }
     } else if (node->token == ast->tokens->OBJECT && node->object->value->type == Function) {
       //do something with the symbol table!
