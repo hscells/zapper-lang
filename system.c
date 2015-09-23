@@ -395,7 +395,7 @@ int z_length(t_list* list) {
 t_object* z_eval(char* expressions, t_stack* stack, t_heap* heap, t_symboltable* s) {
   t_ast* ast = newAst();
   ast = parse(expressions, stack, heap, 0);
-  return eval(ast, s);
+  return eval(ast, s, 0);
 }
 
 t_object* z_int(int x) {
@@ -426,8 +426,11 @@ void addFunctionToSymbolTable(t_symboltable* s, t_object* symbol, struct node *s
   row->start_node = start_node;
   row->end_node = end_node;
   row->formal_parameters = formal_parameters;
+
+  row->next = NULL;
   if (s->head == NULL) {
     s->head = row;
+    s->tail = row;
   } else {
     s->tail->next = row;
     s->tail = row;
@@ -443,8 +446,8 @@ void addObjectToSymbolTable(t_symboltable* s, t_object* symbol, t_object* object
     row->object = object;
     row->id = object->id;
   }
-  row->next = NULL;
 
+  row->next = NULL;
   if (s->head == NULL) {
     s->head = row;
     s->tail = row;
@@ -469,7 +472,7 @@ void printSymboltable(t_symboltable* s) {
   struct t_symboltable_row* r = s->head;
   printf("Current Symboltable:\n");
   while(r != NULL) {
-    printf("\tobject name: %s\n", r->name);
+    printf("\tname: %s\n", r->name);
     r = r->next;
   }
 }

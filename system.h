@@ -75,5 +75,5 @@ t_ast* getFunctionAst(t_symboltable* symboltable, t_object* o);
 t_list* getFunctionParams(t_symboltable* symboltable, t_object* o);
 
 // eval is defined here because it relis on the symboltable object
-t_object* eval(t_ast *ast, t_symboltable* symboltable);
+t_object* eval(t_ast *ast, t_symboltable* symboltable, int depth);
 #endif
