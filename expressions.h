@@ -8,6 +8,7 @@
 
 typedef struct {
   int START;
+  int END;
   int LBRAC;
   int LCURL;
   int RBRAC;

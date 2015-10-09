@@ -49,7 +49,7 @@ int main(int argc, char const *argv[]) {
 
   if (buffer) {
     ast = parse(buffer, mainStack, heap, 0);
-    eval(ast, symboltable, 0);
+    eval(ast, symboltable, 0, ast->head);
   } else {
     exception("No input file was specified.",0 ,NULL);
   }
@@ -69,7 +69,7 @@ void repl_init(t_stack* stack, t_heap* heap) {
     expression->ast = parse(input, stack, heap, 0);
 
     t_symboltable* symboltable = newSymbolTable();
-    eval(expression->ast, symboltable, 0);
+    eval(expression->ast, symboltable, 0, expression->ast->head);
     free(expression->ast);
     free(expression);
 

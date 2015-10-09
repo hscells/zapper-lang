@@ -392,11 +392,11 @@ int z_length(t_list* list) {
   return length;
 }
 
-t_object* z_eval(char* expressions, t_stack* stack, t_heap* heap, t_symboltable* s) {
-  t_ast* ast = newAst();
-  ast = parse(expressions, stack, heap, 0);
-  return eval(ast, s, 0);
-}
+// t_object* z_eval(char* expressions, t_stack* stack, t_heap* heap, t_symboltable* s) {
+//   t_ast* ast = newAst();
+//   ast = parse(expressions, stack, heap, 0);
+//   return eval(ast, s, 0);
+// }
 
 t_object* z_int(int x) {
   t_object* obj = newObject();

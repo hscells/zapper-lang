@@ -63,7 +63,7 @@ int z_length(t_list* list);
 t_object* z_int(int x);
 t_object* z_string(char* x);
 
-t_object* z_eval(char* expressions, t_stack* stack, t_heap* heap, t_symboltable* s);
+// t_object* z_eval(char* expressions, t_stack* stack, t_heap* heap, t_symboltable* s);
 
 t_symboltable* newSymbolTable();
 void addFunctionToSymbolTable(t_symboltable* symboltable, t_object* symbol, struct node *start_node, struct node *end_node, t_list* formal_parameters);
@@ -75,5 +75,5 @@ t_ast* getFunctionAst(t_symboltable* symboltable, t_object* o);
 t_list* getFunctionParams(t_symboltable* symboltable, t_object* o);
 
 // eval is defined here because it relis on the symboltable object
-t_object* eval(t_ast *ast, t_symboltable* symboltable, int depth);
+t_object* eval(t_ast *ast, t_symboltable* symboltable, int depth, struct node* node);
 #endif
