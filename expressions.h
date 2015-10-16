@@ -53,6 +53,8 @@ typedef struct {
   int REST;
   int LENGTH;
 
+  int IMPORT;
+
 } t_system;
 
 // the node structure is a linked list
@@ -65,26 +67,7 @@ struct node {
   int line_num;
 };
 
-typedef struct {
-  struct node *head;
-  struct node *node;
-  struct node *tail;
-  t_token* tokens;
-  t_system* system;
-  int line_count;
-  t_stack* stack;
-} t_ast;
-
-typedef struct {
-  t_ast* ast;
-} t_expression;
-
 // union token initTokens();
-t_ast* parse(char* e, t_stack* stack, t_heap* heap, int index);
-t_ast* newAst();
-struct node* newNode();
-struct node* newTokenNode(int token, t_ast* ast);
-struct node* newObjectNode(t_object* object, t_ast* ast);
-void collect_ast(t_ast *ast);
-
+t_object* parse(char* e);
+t_object* eval(t_list* ast);
 #endif

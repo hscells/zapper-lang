@@ -12,19 +12,8 @@ void repl_init();
 
 int main(int argc, char const *argv[]) {
 
-  // first couple of lines initialise the system itself:
-
-  // create a heap for the vm to run
-  t_heap* heap = newHeap();
-  // create a stack on the heap for the main class
-  t_stack* mainStack = newStack();
-  // symboltable = newSymbolTable(mainStack);
-
-  t_ast* ast = newAst();
-
-  native_code = malloc(sizeof(struct node));
-
-  t_symboltable* symboltable = newSymbolTable();
+  // t_symboltable* symboltable = newSymbolTable();
+  init_system();
   // these next lines are used to read a file in for evaluation
 
   char *buffer = 0;
@@ -48,30 +37,24 @@ int main(int argc, char const *argv[]) {
   }
 
   if (buffer) {
-    ast = parse(buffer, mainStack, heap, 0);
-    eval(ast, symboltable, 0, ast->head);
+    // ast = parse(buffer, mainStack, heap, 0);
+    // eval(ast, symboltable, 0, ast->head);
+    printf("Starting eval\n");
+    eval(parse(buffer)->value->value.l);
   } else {
     exception("No input file was specified.",0 ,NULL);
   }
 
-  // garbage function but resides in expressions
-  free(heap);
-  free(mainStack);
-
+  free(clib_functions);
   return 0;
 }
 
-void repl_init(t_stack* stack, t_heap* heap) {
+void repl_init() {
   char input[INPUT_SIZE] = "";
   printf("%s", ">>> ");
   while (EXIT_STATUS == 0 && fgets(input, INPUT_SIZE, stdin)) {
-    t_expression *expression = (t_expression*) malloc(sizeof(t_expression));
-    expression->ast = parse(input, stack, heap, 0);
 
-    t_symboltable* symboltable = newSymbolTable();
-    eval(expression->ast, symboltable, 0, expression->ast->head);
-    free(expression->ast);
-    free(expression);
+    // t_symboltable* symboltable = newSymbolTable();
 
     if (EXIT_STATUS == 0) {
       printf("%s", ">>> ");

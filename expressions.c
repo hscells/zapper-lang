@@ -4,6 +4,7 @@
 #include <stdbool.h>
 #include "expressions.h"
 #include "system.h"
+#include "types.h"
 
 #define EOL '\n'
 
@@ -11,108 +12,8 @@
 #define CHARACTERS "!?-_abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 #define PRECISION "."
 
-#define MIN_BUILTIN 0xa000
-#define MAX_BUILTIN 0xa012
-
 int node_id = 0;
 
-t_token* initTokens() {
-  t_token* tokens = (t_token*) malloc(sizeof(t_token));
-  tokens->START  = 0x0000;
-  tokens->END    = 0x000a;
-  tokens->LBRAC  = 0x0001;
-  tokens->RBRAC  = 0x0002;
-  tokens->LCURL  = 0x0003;
-  tokens->RCURL  = 0x0004;
-  tokens->IF     = 0x0005;
-  tokens->FOR    = 0x0006;
-  tokens->FN     = 0x0007;
-  tokens->RETURN = 0x0008;
-  tokens->OBJECT = 0x0009;
-  tokens->INT    = 0x0010;
-  tokens->FLOAT  = 0x0011;
-  tokens->CHAR   = 0x0012;
-  tokens->STRING = 0x0013;
-  tokens->BOOL   = 0x0020;
-  tokens->LIST   = 0x0014;
-  tokens->COMMA  = 0x0015;
-  tokens->DOT    = 0x0016;
-  tokens->CLASS  = 0x0017;
-  tokens->NEW    = 0x0018;
-  tokens->SYMBOL = 0x0019;
-  return tokens;
-}
-
-t_system* initSystem() {
-  t_system* system = (t_system*) malloc(sizeof(t_system));
-  // builtins
-  system->ADD     = 0xa000;
-  system->SUB     = 0xa001;
-  system->MUL     = 0xa002;
-  system->DIV     = 0xa003;
-  system->EQ      = 0xa004;
-  system->LT      = 0xa005;
-  system->GT      = 0xa006;
-  system->LTEQ    = 0xa007;
-  system->GTEQ    = 0xa008;
-  system->PRINT   = 0xa009;
-  system->PRINTLN = 0xa012;
-  system->READ    = 0xa010;
-  system->EXCEPT  = 0xa011;
-
-  // list ops
-  system->LIST    = 0xa013;
-  system->CONJ    = 0xa014;
-  system->FIRST   = 0xa015;
-  system->REST    = 0xa016;
-  system->LENGTH  = 0xa017;
-  return system;
-}
-
-t_ast* newAst () {
-  t_token* tokens = initTokens();
-  t_system* system = initSystem();
-  t_ast* ast = (t_ast*) malloc(sizeof(t_ast));
-  ast->line_count = 1;
-  ast->tokens = tokens;
-  ast->system = system;
-  ast->head = newTokenNode(ast->tokens->START, ast);
-  ast->node = ast->head;
-  ast->head->next = ast->node;
-  node_id++;
-  return ast;
-}
-
-struct node* newNode() {
-  struct node* node = (struct node*) malloc(sizeof(struct node));
-  node->id = node_id++;
-  return node;
-}
-
-struct node* newTokenNode(int token, t_ast* ast) {
-  struct node* node = newNode();
-  node->token = token;
-  return node;
-}
-
-struct node* newObjectNode(t_object* object, t_ast* ast) {
-  struct node* node = newNode();
-  node->token = ast->tokens->OBJECT;
-  node->object = newObject();
-  node->object->value->value = object->value->value;
-  node->object->value->type = object->value->type;
-  return node;
-}
-
-void collect_ast(t_ast *ast) {
-  struct node* curr;
-  struct node* head = ast->head;
-  while((curr = head) != NULL) {
-    head = head->next;
-    free(curr);
-  }
-  free(ast);
-}
 
 /**
  * clean up a list structure
@@ -132,7 +33,7 @@ void collect_list(t_list* l) {
  * @param  token the token being looked at
  * @return       a type from types.h
  */
-int inferType(char* token) {
+enum t_type inferType(char* token) {
   bool contains_number = false;
   bool contains_char = false;;
   bool contains_precision = false;
@@ -170,19 +71,24 @@ int inferType(char* token) {
   return Symbol;
 }
 
-t_ast* parse(char* e, t_stack* stack, t_heap* heap, int index) {
+t_object* parse(char* e) {
   int i;
   char c;
-  char cToStr[2];
-  int type;
+  enum t_type type;
   char tok[255];
-  t_ast* ast = newAst();
+  char cToStr[2];
 
-  for(i = index; i < strlen(e) - 1; i++) {
+  t_list* expressions = z_list()->value->value.l;
+  t_object* root_node = newObject();
+  root_node->value->value = (t_generic_value) expressions;
+  root_node->value->type = List;
+  t_list* current_list = expressions;
+  int line_count = 0;
+
+  for(i = 0; i < strlen(e) - 1; i++) {
 
     memset(tok,0,sizeof(tok));
     c = e[i];
-
     // skip over comments
     if (c == ';') {
       while (c != EOL) {
@@ -191,649 +97,125 @@ t_ast* parse(char* e, t_stack* stack, t_heap* heap, int index) {
       }
     }
 
-    // maintain the line count
-    while (c == EOL) {
-      ast->line_count++;
-      c = e[++i];
-    }
-
-    // who the heck cares about spaces!?
+    // continue to ignore spaces and tabs
     while (c == ' ' || c == '\t'){
       c = e[++i];
     }
 
-
-    ast->node->line_num = ast->line_count;
-
-    // parse string objects
-    if (c == '"') {
-      // need to do this twice.
-      c = e[i++];
-      c = e[i++];
-      // for whatever c = e[i+=2] won't work...
-
-      char* string = malloc(sizeof(char) * 255);
-      int ch = 0;
-      t_object* obj = newObject();
-
-      obj->value->type = String;
-      while(c != '"') {
-        string[ch] = c;
-        c = e[i++];
-        ch++;
-      }
-
-      string[ch] = '\0';
-      obj->value->value.s = string;
-      ast->node->next = newObjectNode(obj, ast);
-      ast->node = ast->node->next;
-      c = e[i];
+    // maintain the line count
+    while (c == EOL) {
+      line_count++;
+      c = e[++i];
     }
 
-    // add individual tokens to the ast
+    printf("%c",c);
+
     if (c == '(') {
-      ast->node->next = newTokenNode(ast->tokens->LBRAC, ast);
-      ast->node = ast->node->next;
-      c = e[i++];
+      t_object* nested_expression = newObject();
+      nested_expression->value->value = (t_generic_value) z_list()->value->value.l;
+      nested_expression->value->type = List;
+      z_conj(current_list, nested_expression);
+      current_list = nested_expression->value->value.l;
     }
 
-    if (c == ')') {
-      ast->node->next = newTokenNode(ast->tokens->RBRAC, ast);
-      ast->node = ast->node->next;
-      c = e[i++];
+    else if (c == ')') {
+      current_list = root_node->value->value.l;
     }
 
-    if (c == '{') {
-      ast->node->next = newTokenNode(ast->tokens->LCURL, ast);
-      ast->node = ast->node->next;
-      c = e[i++];
-    }
-
-    if (c == '}') {
-      ast->node->next = newTokenNode(ast->tokens->RCURL, ast);
-      ast->node = ast->node->next;
-      c = e[i++];
-    }
-
-    if (c == '.') {
-      ast->node->next = newTokenNode(ast->tokens->DOT, ast);
-      ast->node = ast->node->next;
-      c = e[i++];
-    }
-
-    if (c == ',') {
-      ast->node->next = newTokenNode(ast->tokens->COMMA, ast);
-      ast->node = ast->node->next;
-      c = e[i++];
-    }
-
-    // add tokens which are >1 character in length
-    while (c != '(' && c != ',' && c != ')' && c != '{' && c != '}' && i < strlen(e)) {
-      cToStr[0] = c;
-      strcat(tok, cToStr);
-      i++;
-      c = e[i];
-    }
-
-    c = e[--i];
-    // printf ("tok is: %s, c is: %c\n", tok, c);
-
-    if (strlen(tok) > 0) {
-      if (strcmp(tok,"if") == 0) {
-        ast->node->next = newTokenNode(ast->tokens->IF, ast);
-        ast->node = ast->node->next;
-      } else if (strcmp(tok, "for") == 0) {
-        ast->node->next = newTokenNode(ast->tokens->FOR, ast);
-        ast->node = ast->node->next;
-      } else if (strcmp(tok, "fn") == 0) {
-        ast->node->next = newTokenNode(ast->tokens->FN, ast);
-        ast->node = ast->node->next;
-      } else if (strcmp(tok, "return") == 0) {
-        ast->node->next = newTokenNode(ast->tokens->RETURN, ast);
-        ast->node = ast->node->next;
-      } else if (strcmp(tok, "int") == 0) {
-        ast->node->next = newTokenNode(ast->tokens->INT, ast);
-        ast->node = ast->node->next;
-      } else if (strcmp(tok, "float") == 0) {
-        ast->node->next = newTokenNode(ast->tokens->FLOAT, ast);
-        ast->node = ast->node->next;
-      } else if (strcmp(tok, "char") == 0) {
-        ast->node->next = newTokenNode(ast->tokens->CHAR, ast);
-        ast->node = ast->node->next;
-      } else if (strcmp(tok, "string") == 0) {
-        ast->node->next = newTokenNode(ast->tokens->STRING, ast);
-        ast->node = ast->node->next;
-      } else if (strcmp(tok, "list") == 0) {
-        ast->node->next = newTokenNode(ast->tokens->LIST, ast);
-        ast->node = ast->node->next;
-      } else if (strcmp(tok, "class") == 0) {
-        ast->node->next = newTokenNode(ast->tokens->CLASS, ast);
-        ast->node = ast->node->next;
-      } else if (strcmp(tok, "new") == 0) {
-        ast->node->next = newTokenNode(ast->tokens->NEW, ast);
-        ast->node = ast->node->next;
-      } else if (strcmp(tok, "+") == 0) {
-        ast->node->next = newTokenNode(ast->system->ADD, ast);
-        ast->node = ast->node->next;
-      } else if (strcmp(tok, "-") == 0) {
-        ast->node->next = newTokenNode(ast->system->SUB, ast);
-        ast->node = ast->node->next;
-      } else if (strcmp(tok, "*") == 0) {
-        ast->node->next = newTokenNode(ast->system->MUL, ast);
-        ast->node = ast->node->next;
-      } else if (strcmp(tok, "/") == 0) {
-        ast->node->next = newTokenNode(ast->system->DIV, ast);
-        ast->node = ast->node->next;
-      } else if (strcmp(tok, "=") == 0) {
-        ast->node->next = newTokenNode(ast->system->EQ, ast);
-        ast->node = ast->node->next;
-      } else if (strcmp(tok, "<") == 0) {
-        ast->node->next = newTokenNode(ast->system->LT, ast);
-        ast->node = ast->node->next;
-      } else if (strcmp(tok, ">") == 0) {
-        ast->node->next = newTokenNode(ast->system->GT, ast);
-        ast->node = ast->node->next;
-      } else if (strcmp(tok, "<=") == 0) {
-        ast->node->next = newTokenNode(ast->system->LTEQ, ast);
-        ast->node = ast->node->next;
-      } else if (strcmp(tok, ">=") == 0) {
-        ast->node->next = newTokenNode(ast->system->GTEQ, ast);
-        ast->node = ast->node->next;
-      } else if (strcmp(tok, "print") == 0) {
-        ast->node->next = newTokenNode(ast->system->PRINT, ast);
-        ast->node = ast->node->next;
-      } else if (strcmp(tok, "println") == 0) {
-        ast->node->next = newTokenNode(ast->system->PRINTLN, ast);
-        ast->node = ast->node->next;
-      } else if (strcmp(tok, "read") == 0) {
-        ast->node->next = newTokenNode(ast->system->READ, ast);
-        ast->node = ast->node->next;
-      } else if (strcmp(tok, "throw") == 0) {
-        ast->node->next = newTokenNode(ast->system->EXCEPT, ast);
-        ast->node = ast->node->next;
-      } else {
-        type = inferType(tok);
-        // printf("this object is of type <%d>: %s\n", type, tok);
-        t_object* obj = newObject();
-        char* copy;
-        switch(type) {
-          case -1:
-            exception("Could not determine the type of this object", ast->node->line_num, tok);
-          case Int:
-            obj->value->value = (t_generic_value) atoi(tok);
-            obj->value->type = Int;
-            ast->node->next = newObjectNode(obj, ast);
-            break;
-          case Char:
-            obj->value->value = (t_generic_value) tok[0];
-            obj->value->type = Char;
-            ast->node->next = newObjectNode(obj, ast);
-            break;
-          case Float:
-            obj->value->value = (t_generic_value) atof(tok);
-            obj->value->type = Char;
-            ast->node->next = newObjectNode(obj, ast);
-            break;
-          // strings and symbols are a little more tricky, because of pointers
-          // so we need to allocate space for the new char*
-          case Symbol:
-            copy = malloc(strlen(tok) + 1);
-            strcpy(copy, tok);
-            obj->value->type = Symbol;
-            obj->value->value.s = copy;
-            ast->node->next = newObjectNode(obj, ast);
-            break;
-        }
-        collect(obj);
-        ast->node = ast->node->next;
+    else {
+      // moving onto tokens
+      // add toke ns which are >1 character in length
+      while (c != '(' && c != ',' && c != ')' && c != '{' && c != '}' && c != ' ' && c != '\t' && i < strlen(e)) {
+        cToStr[0] = c;
+        strcat(tok, cToStr);
+        c = e[++i];
       }
-    }
+      c = e[--i];
 
-  }
-  ast->node->next = newTokenNode(ast->tokens->END, ast);
-  ast->tail = ast->node->next;
-  ast->tail->next = NULL;
-  return ast;
-}
-
-bool nodeIsFunction(struct node* node, t_ast* ast){
-  if (node->token == ast->tokens->RETURN) {
-    return false;
-  }
-  if (node->token <= MAX_BUILTIN && node->token >= MIN_BUILTIN) {
-    return true;
-  } else if (node->token == ast->tokens->IF){
-    return true;
-  } else if (node->object != NULL && node->object->value->type == Function) {
-    return true;
-  }
-  return false;
-}
-
-/**
- * given an ast location, return a list object
- * @param  ast the ast object with the head node pointing at the start of the list
- * @return     a list object
- */
-t_list* getList(t_ast* ast) {
-  int depth = 0;
-
-  struct node* node = ast->head;
-  t_list* list = z_list();
-
-  while ((node = node->next) != NULL) {
-    if (node->token == ast->tokens->LBRAC) {
-      depth++;
-    } else if (node->token == ast->tokens->RBRAC) {
-      depth--;
-      if (depth == 0) {
-        return list;
+      type = inferType(tok);
+      // printf("this object is of type <%d>: %s\n", type, tok);
+      t_object* obj = newObject();
+      char* copy;
+      switch(type) {
+        case Int:
+          obj->value->value = (t_generic_value) atoi(tok);
+          obj->value->type = Int;
+          z_conj(current_list, obj);
+          break;
+        case Char:
+          obj->value->value = (t_generic_value) tok[0];
+          obj->value->type = Char;
+          z_conj(current_list, obj);
+          break;
+        case Float:
+          obj->value->value = (t_generic_value) atof(tok);
+          obj->value->type = Char;
+          z_conj(current_list, obj);
+          break;
+        // strings and symbols are a little more tricky, because of pointers
+        // so we need to allocate space for the new char*
+        case Symbol:
+          copy = malloc(strlen(tok) + 1);
+          strcpy(copy, tok);
+          obj->value->type = Symbol;
+          obj->value->value.s = copy;
+          z_conj(current_list, obj);
+          break;
+        case Function:
+         break;
+        case List:
+          break;
+        case String:
+          break;
+        case Bool:
+          break;
+        case Exception:
+          break;
+        default:
+          exception("Could not determine the type of this object", line_count, tok);
       }
-    }
-
-    else if (node->token == ast->tokens->OBJECT) {
-      z_conj(list, node->object);
-    }
-
-    if (node->next == NULL) {
-      exception("Unmatched parenthesis", node->line_num, ")");
+      collect(obj);
     }
   }
-  return list;
+  printf("\n");
+  return root_node;
 }
 
-t_object* eval(t_ast *ast, t_symboltable* symboltable, int depth, struct node* node) {
-  t_object* value;
-  t_list* params;
-  int paren_count = 0;
-
-  // bool inside_function_definition = false;
-  bool inside_actual_parameters = false;
-  int current_function = 0;
-
-  // print each value of the linked list of nodes
-  // struct node* node = ast->head;
-
-  // node = ast->head;
-  for(int i = 0; i < depth; i++) {
-    printf("\t");
-  }
-  printf("new eval stack\n");
-  while (node != ast->tail && node != NULL){
-    for(int i = 0; i < depth; i++) {
-      printf("\t");
-    }
-
-    printf("token: %d", node->token);
-    if (node->token == ast->tokens->OBJECT) {
-      printf(" value: ");
-      z_println(node->object, symboltable);
+t_object* call(struct function* function, t_list* args) {
+  t_list* newargs = z_list()->value->value.l;
+  struct atom* currentAtom = args->head;
+  while (currentAtom->next != NULL) {
+    if (z_typeof(currentAtom->value) == List) {
+      z_conj(newargs, eval(currentAtom->value->value->value.l));
     } else {
-      printf("\n");
+      z_conj(newargs, currentAtom->value);
     }
-
-    // printf("%d\n", node->token);
-    // make sure there isn't a mismatched paren
-    // also keep track of the current list structure
-    if (node->token == ast->tokens->LBRAC) {
-      paren_count++;
-      if (current_function > 0) {
-        params = z_list();
-        inside_actual_parameters = true;
-      }
-
-    }
-
-    if (node->token == ast->tokens->RBRAC) {
-      paren_count--;
-      if (paren_count == 0) {
-        if (current_function == 0) {
-
-        } else if(current_function == ast->system->ADD) { // otherwise evaluate a builtin
-          if (z_length(params) == 2) {
-            return z_add(params->head->value, params->head->next->value);
-          } else {
-            exception("Wrong number of arguments, function expects 2", node->line_num, "+");
-          }
-        } else if(current_function == ast->system->SUB) {
-          if (z_length(params) == 2) {
-            return z_sub(params->head->value, params->head->next->value);
-          } else {
-            exception("Wrong number of arguments, function expects 2", node->line_num, "-");
-          }
-        } else if(current_function == ast->system->MUL) {
-          if (z_length(params) == 2) {
-            return z_mul(params->head->value, params->head->next->value);
-          } else {
-            exception("Wrong number of arguments, function expects 2", node->line_num, "*");
-          }
-        } else if(current_function == ast->system->DIV) {
-          if (z_length(params) == 2) {
-            return z_div(params->head->value, params->head->next->value);
-          } else {
-            exception("Wrong number of arguments, function expects 2", node->line_num, "/");
-          }
-        } else if(current_function == ast->system->EQ) {
-          if (z_length(params) == 2) {
-            return z_eq(params->head->value, params->head->next->value);
-          } else {
-            exception("Wrong number of arguments, function expects 2", node->line_num, "=");
-          }
-        } else if(current_function == ast->system->LT) {
-          if (z_length(params) == 2) {
-            return z_lt(params->head->value, params->head->next->value);
-          } else {
-            exception("Wrong number of arguments, function expects 2", node->line_num, "<");
-          }
-        } else if(current_function == ast->system->GT) {
-          if (z_length(params) == 2) {
-            return z_gt(params->head->value, params->head->next->value);
-          } else {
-            exception("Wrong number of arguments, function expects 2", node->line_num, ">");
-          }
-        } else if(current_function == ast->system->LTEQ) {
-          if (z_length(params) == 2) {
-            return z_lteq(params->head->value, params->head->next->value);
-          } else {
-            exception("Wrong number of arguments, function expects 2", node->line_num, "<=");
-          }
-        } else if(current_function == ast->system->GTEQ) {
-          if (z_length(params) == 2) {
-            return z_gteq(params->head->value, params->head->next->value);
-          } else {
-            exception("Wrong number of arguments, function expects 2", node->line_num, ">=");
-          }
-        } else if(current_function == ast->system->PRINT) {
-          if (z_length(params) == 1) {
-            z_print(params->head->value, symboltable);
-            return value;
-          } else {
-            exception("Wrong number of arguments, function expects 1", node->line_num, "print");
-          }
-        } else if(current_function == ast->system->PRINTLN) {
-          if (z_length(params) == 1) {
-            z_println(params->head->value, symboltable);
-            return value;
-          } else {
-            exception("Wrong number of arguments, function expects 1", node->line_num, "println");
-          }
-        } else if(current_function == ast->system->READ) {
-          return z_read();
-        } else if(current_function == ast->system->EXIT) {
-          node->next = NULL;
-        } else {
-          exception("Could not evaluate function.", node->line_num, "<Function Object>");
-        }
-
-        current_function = 0;
-      }
-    }
-
-    if (node->token <= MAX_BUILTIN && node->token >= MIN_BUILTIN) {
-      current_function = node->token;
-    }
-
-    /**
-     * Logic for a return
-     * return(EXPRESSION)
-     * The value inside the return is evaluated and set to the current value context
-     */
-    if (node->token == ast->tokens->RETURN) {
-      if (node->next->next->object->value->type != Function && node->next->next->token == ast->tokens->OBJECT) {
-        return node->next->next->object;
-      } else if (node->next->next->object->value->type != Function && node->next->next->token == ast->tokens->SYMBOL) {
-        // if is encounteres a symbol, it's not falling through to here
-        return getSymbolByName(symboltable, node->next->next->object);
-      } else {
-        return eval(ast, symboltable, depth + 1, node->next->next);
-      }
-    }
-
-    /**
-     * Creates a new symbol->object pair and add the combo to a symbol table
-     */
-    if (node->token == ast->tokens->INT
-    ||  node->token == ast->tokens->FLOAT
-    ||  node->token == ast->tokens->CHAR
-    ||  node->token == ast->tokens->STRING
-    ||  node->token == ast->tokens->BOOL) {
-      t_ast* tmp_ast = newAst();
-      tmp_ast->head = node;
-      t_list* args = getList(tmp_ast);
-      // the parsing creates objects and infers the type ahead of execution, so the zapper typeof function can be used
-      if (z_length(args) == 2) {
-        switch(z_typeof(z_nth(args,1))){
-          case Int:
-            z_nth(args, 0)->value->type = Int;
-            addObjectToSymbolTable(symboltable, z_nth(args, 0), z_nth(args, 1), node);
-            break;
-          case Float:
-            z_nth(args, 0)->value->type = Float;
-            addObjectToSymbolTable(symboltable, z_nth(args, 0), z_nth(args, 1), node);
-            break;
-          case Char:
-            z_nth(args, 0)->value->type = Char;
-            addObjectToSymbolTable(symboltable, z_nth(args, 0), z_nth(args, 1), node);
-            break;
-          case String:
-            z_nth(args, 0)->value->type = String;
-            addObjectToSymbolTable(symboltable, z_nth(args, 0), z_nth(args, 1), node);
-            break;
-          case Bool:
-            z_nth(args, 0)->value->type = Bool;
-            addObjectToSymbolTable(symboltable, z_nth(args, 0), z_nth(args, 1), node);
-            break;
-          default:
-            exception("Could not reliably determine the type to create the object", node->line_num, z_nth(args, 0)->value->value.s);
-        }
-      } else if (z_length(args) == 1) {
-        if(node->token == ast->tokens->IF) {
-          z_nth(args, 0)->value->type = Int;
-        } else if (node->token == ast->tokens->FLOAT) {
-          z_nth(args, 0)->value->type = Float;
-        } else if (node->token == ast->tokens->CHAR) {
-          z_nth(args, 0)->value->type = Char;
-        } else if (node->token == ast->tokens->STRING) {
-          z_nth(args, 0)->value->type = String;
-        } else if (node->token == ast->tokens->BOOL) {
-          z_nth(args, 0)->value->type = Bool;
-        }
-        addObjectToSymbolTable(symboltable, z_nth(args, 0), NULL, node);
-      } else {
-        exception("Invalid number of arguments passed to assignment", node->line_num, "int");
-      }
-      while (node->token != ast->tokens->RBRAC) {
-        node = node->next;
-      }
-    }
-
-    /**
-     * Logic for a function definition
-     * A fn is defined as follows:
-     * fn(add,(a,b),{return(+(a,b))})
-     */
-    if (node->token == ast->tokens->FN) {
-      t_ast* tmp_ast = newAst();
-      tmp_ast->head = node;
-      t_list* args = getList(tmp_ast);
-      z_nth(args,0)->value->type = Function;
-
-      struct node* start_node;
-      struct node* end_node;
-
-      // move over the ast up until the first comma (parameters)
-      while((node = node->next) != NULL && node->token != ast->tokens->COMMA);
-      t_ast* param_ast = newAst();
-      param_ast->head = node;
-      t_list* params = getList(param_ast);
-      while (node->token != ast->tokens->RBRAC) {
-        node = node->next;
-      }
-
-      start_node = node->next->next;
-
-      // now just ignore everything else (the statements) until the end of the function definition
-      int depth = 1;
-      struct node* n = node;
-      bool cond = true;
-      while (cond & ((n = n->next) != NULL)) {
-        if (n->token == ast->tokens->LBRAC) {
-          depth++;
-        } else if (n->token == ast->tokens->RBRAC) {
-          end_node = n;
-          depth--;
-          if (depth == 0) {
-            cond = false;
-          }
-        }
-      }
-
-      // set the node pointer to the end of the function definition
-      node = end_node;
-
-      // we now have all the information needed for an insertion to the symboltable
-      addFunctionToSymbolTable(symboltable, z_nth(args, 0), start_node, node, params);
-
-      printf("function name: %s\n", z_nth(args,0)->value->value.s);
-      // printf("number of args: %d\n", z_length(z_nth(args,1)));
-    }
-
-    /**
-     * Logic for a function invocation
-     */
-    if (node->object != NULL && (z_typeof(node->object) == Symbol)) {
-      if (inSymboltable(symboltable, node->object) && z_typeof(getSymbolByName(symboltable, node->object)) == Function) {
-        t_ast* fn_ast = newAst();
-        t_ast* param_ast = newAst();
-        param_ast->head = node;
-        fn_ast = getFunctionAst(symboltable, node->object);
-        t_list* formal_parameters = getFunctionParams(symboltable, node->object);
-        t_list* actual_parameters = getList(param_ast);
-        if (z_length(formal_parameters) == z_length(actual_parameters)) {
-          t_symboltable* s = newSymbolTable();
-          for(int i = 0; i < z_length(formal_parameters); i++) {
-            // add the formal and actual parameters to the symbol table
-            addObjectToSymbolTable(s, z_nth(formal_parameters,i), z_nth(actual_parameters,i), node);
-          }
-          // add the function itself to the symboltable
-          addFunctionToSymbolTable(s, node->object, fn_ast->head, fn_ast->tail, formal_parameters);
-          value = eval(fn_ast, s, depth + 1, fn_ast->head);
-        } else {
-          exception("Actual parameters do not match formal parameter list",node->line_num,node->object->value->value.s);
-        }
-      }
-    }
-
-    /**
-     * Logic for an if expression
-     * An if function takes the following parameters:
-     * if(predicate_function,function,optional function)
-     * nest if's by placing another if inside the functions
-     */
-    if (node->token == ast->tokens->IF) {
-      struct node* last_node;
-      struct node* predicate;
-      struct node* function1;
-      struct node* function2;
-      struct node* tmp = node;
-      int num_functions = 0;
-      int matching_brakets = 0;
-      while(tmp != NULL) {
-        if (tmp->token == ast->tokens->LBRAC) {
-          matching_brakets++;
-        }
-        if (tmp->token == ast->tokens->RBRAC) {
-          matching_brakets--;
-        }
-        if (num_functions == 0) {
-          // we have our predicate_function
-          if (nodeIsFunction(tmp, ast) && matching_brakets == 1) {
-            predicate = tmp;
-            num_functions++;
-          }
-        }
-        else if (num_functions == 1) {
-          // we have the first function evaluated if true
-          if (nodeIsFunction(tmp, ast) && matching_brakets == 1) {
-            function1 = tmp;
-            num_functions++;
-          }
-        }
-        else if (num_functions == 2) {
-          // we have the first function evaluated if true
-          if (nodeIsFunction(tmp, ast) && matching_brakets == 1) {
-            function2 = tmp;
-            num_functions++;
-          }
-        }
-        else if (num_functions == 3 && matching_brakets == 0) {
-          last_node = tmp;
-          num_functions++;
-        }
-        tmp = tmp->next;
-      }
-      t_object* result = eval(ast, symboltable, depth + 1, predicate);
-      if (result->value->value.b == true) {
-        // we know the predicate evaluated to true, so skip to that node
-        // evaluate everything inside that expression body
-        value = eval(ast, symboltable, depth + 1, function1);
-      } else {
-        // the predicate evaluated to false, so skip to the second expression body
-        // evaluate the second expression body
-        value = eval(ast, symboltable, depth + 1, function2);
-      }
-      // skip to the end of the if body
-      node = last_node;
-    }
-
-    if (inside_actual_parameters) {
-      // printf("inside actual parameters!\n");
-      if (node->token == ast->tokens->OBJECT && z_typeof(node->object) != Function) {
-        // printf("adding object to params!\n");
-        // we know that this must be just a plain old object now
-
-       // if the ast is inside a parameter list, add the object to that list
-       if(z_typeof(node->object) == Symbol) {
-         if (getSymbolByName(symboltable, node->object)->value->type == Function) {
-           t_object* obj = newObject();
-           obj = eval(ast, symboltable, depth + 1, node);
-           z_conj(params, obj);
-
-           int d = 0;
-           bool cond = true;
-           struct node* n = node;
-           while (cond & ((n = n->next) != NULL)) {
-             if (n->token == ast->tokens->LBRAC) {
-               d++;
-             } else if (n->token == ast->tokens->RBRAC) {
-               node = n;
-               d--;
-               if (d == 0) {
-                 cond = false;
-               }
-             }
-           }
-         } else {
-           z_conj(params, getSymbolByName(symboltable, node->object));
-         }
-       } else {
-         z_conj(params, node->object);
-       }
-     } else  if (node->next != NULL && node->next->token <= MAX_BUILTIN && node->next->token >= MIN_BUILTIN) {
-        // this will evaluate parameters if they are functions
-        // parameters are evaludated and reduced before being passed to the calling function
-
-        // TODO
-        // while this works fine for +(1,1) and +(1,+(1,1)) a large bug prevents +(+(1,1),+(1,1)) from being evaluated
-        t_object* param = newObject();
-        param = eval(ast, symboltable, depth + 1, node->next);
-        z_conj(params, param);
-        while (node->next->token != ast->tokens->RBRAC) {
-          node = node->next;
-        }
-      }
-    }
-    node = node->next;
+    currentAtom = currentAtom->next;
   }
-  return value;
+  return (*function->pointer)(newargs);
+}
+
+t_object* eval(t_list* ast) {
+  struct atom* currentAtom = ast->head;
+  t_object* value;
+
+  while (currentAtom->next != NULL) {
+
+    z_println(currentAtom->value, NULL);
+
+
+    // if (currentAtom->value->value->type == List) { // is the symbol a nested list?
+    //   printf("entering first expression\n");
+    //   value = eval(currentAtom->value->value->value.l);
+    //   currentAtom = currentAtom->value->value->value.l->tail;
+    // } else if (currentAtom == currentAtom->value->value->value.l->head) { // is the symbol at the start of the list a builtin C function?
+    //   if (inSymboltable(clib_functions, currentAtom->value->value->value.function->name)) {
+    //     // struct function* temp_func = getFunctionFromSymbolTable(clib_functions, currentAtom->value->value->value.function->name);
+    //     // return call(temp_func, z_rest(ast)->value->value.l);
+    //   }
+    // }
+
+    currentAtom = currentAtom->next;
+  }
+  return newObject();
 }
