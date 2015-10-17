@@ -1,7 +1,7 @@
 ; demonstration of a recursive function
+(fn fib [n]
+  (cond
+    (<= 1 n) n
+    (true (+ (fib (- n 1)) (fib (- n 2)))))
 
-fn(fibbo,(n){
-  if(<=(1,n),n,+(fibbo(-(n,1)), fibbo(-(n,2))))
-})
-
-print(fibbo(10))
+(println (fib 5))
