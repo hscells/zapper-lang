@@ -1,0 +1,14 @@
+# program
+program     ::= expression+
+expression  ::= '(' FUNCTION object+ ')'
+object      ::=  INT | FLOAT | CHAR | STRING | BOOL | LIST | FUNCTION | SYMBOL
+
+# types
+INT         ::= [0-9]+
+FLOAT       ::= [0-9]+\.[0-9]+
+CHAR        ::= [a-zA-Z] | '\'[0123456789?<>?/'"{}[]_+-=()!@#$%^&*\|~`]
+STRING      ::= '"' CHAR* '"'
+BOOL        ::= True | False
+LIST        ::= '(' object+ ')'
+FUNCTION    ::= SYMBOL
+SYMBOL      ::= [a-zA-Z_-?+-*/<>=]+
