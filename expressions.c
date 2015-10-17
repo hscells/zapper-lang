@@ -71,6 +71,21 @@ enum t_type inferType(char* token) {
   return Symbol;
 }
 
+void printast(t_list* ast, int t) {
+  struct atom* a = ast->head;
+  while (a != NULL) {
+    if (a->value->value->type == List) {
+      printast(a->value->value->value.l, t + 1);
+    } else {
+      for (int i = 0; i < t; i++) {
+        printf("\t");
+      }
+      printf("parsed: %d\n", a->value->value->type);
+    }
+    a = a->next;
+  }
+}
+
 t_object* parse(char* e) {
   int i;
   char c;
@@ -79,6 +94,7 @@ t_object* parse(char* e) {
   char cToStr[2];
 
   t_list* expressions = z_list()->value->value.l;
+  t_list* parent_list = expressions;
   t_object* root_node = newObject();
   root_node->value->value = (t_generic_value) expressions;
   root_node->value->type = List;
@@ -113,17 +129,16 @@ t_object* parse(char* e) {
       nested_expression->value->value = (t_generic_value) z_list()->value->value.l;
       nested_expression->value->type = List;
       z_conj(current_list, nested_expression);
+      parent_list = current_list;
       current_list = nested_expression->value->value.l;
     }
 
     else if (c == ')') {
-      current_list = root_node->value->value.l;
+      current_list = parent_list;
     }
 
     else {
-      // moving onto tokens
-      // add toke ns which are >1 character in length
-      while (c != '(' && c != ',' && c != ')' && c != '{' && c != '}' && c != ' ' && c != '\t' && i < strlen(e)) {
+      while (c != '(' && c != ')' && c != ' ' && c != '\t' && i < strlen(e)) {
         cToStr[0] = c;
         cToStr[1] = '\0';
         strcat(tok, cToStr);
@@ -131,7 +146,7 @@ t_object* parse(char* e) {
       }
       c = e[--i];
       type = inferType(tok);
-      // printf("this object is of type <%d>: %s\n", type, tok);
+      printf("this object is of type <%d>: %s\n", type, tok);
       t_object* obj = newObject();
       char* copy;
       switch(type) {
@@ -174,15 +189,15 @@ t_object* parse(char* e) {
       }
     }
   }
+  printast(expressions, -1);
   return root_node;
 }
 
 t_object* call(struct function* function, t_list* args) {
   t_list* newargs = z_list()->value->value.l;
   struct atom* currentAtom = args->head;
+  printf("old args: %d\n",z_length(args)->value->value.i);
   while (currentAtom != NULL) {
-    printf("length of args: %d\n", z_length(args)->value->value.i);
-    printf("%d\n", currentAtom->value->value->type);
     if (currentAtom->value->value->type == List) {
       printf("evaluating nested list... \n");
       t_object* v = eval(currentAtom->value->value->value.l);
@@ -193,7 +208,6 @@ t_object* call(struct function* function, t_list* args) {
     }
     currentAtom = currentAtom->next;
   }
-  printf("old args: %d\n",z_length(args)->value->value.i);
   printf("new args: %d\n",z_length(newargs)->value->value.i);
   if (z_length(newargs)->value->value.i == function->params) {
     return (*function->pointer)(newargs);
@@ -217,8 +231,7 @@ t_object* eval(t_list* ast) {
       }
     } else if (currentAtom->value->value->type == List) { // is the symbol a nested list?
       printf("evaluating nested expression...\n");
-      value = eval(currentAtom->value->value->value.l);
-      currentAtom = currentAtom->value->value->value.l->tail;
+      return eval(currentAtom->value->value->value.l);
     }
 
     currentAtom = currentAtom->next;
