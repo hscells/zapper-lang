@@ -28,8 +28,8 @@ t_symboltable *clib_functions;
 
 t_generic* newGeneric();
 
-void z_print(t_object* o, t_symboltable* s);
-void z_println(t_object* o, t_symboltable* s);
+t_object* z_print(t_list* arg);
+t_object* z_println(t_list* arg);
 t_object* z_read();
 
 enum t_type z_typeof(t_object* o);
@@ -37,16 +37,16 @@ void exception(char* e, int line_num, char* token);
 void z_exception(char* e);
 
 t_object* z_add(t_list* args);
-t_object* z_sub(t_object* a, t_object* b);
-t_object* z_mul(t_object* a, t_object* b);
-t_object* z_div(t_object* a, t_object* b);
+t_object* z_sub(t_list* args);
+t_object* z_mul(t_list* args);
+t_object* z_div(t_list* args);
 
-t_object* z_teq(t_object* a, t_object* b);
-t_object* z_eq(t_object* a, t_object* b);
-t_object* z_lt(t_object* a, t_object* b);
-t_object* z_gt(t_object* a, t_object* b);
-t_object* z_lteq(t_object* a, t_object* b);
-t_object* z_gteq(t_object* a, t_object* b);
+t_object* z_teq(t_list* args);
+t_object* z_eq(t_list* args);
+t_object* z_lt(t_list* args);
+t_object* z_gt(t_list* args);
+t_object* z_lteq(t_list* args);
+t_object* z_gteq(t_list* args);
 
 t_object* z_list();
 t_object* z_list_obj(t_list* list);
@@ -65,7 +65,7 @@ void init_lists();
 void init_seq();
 
 t_symboltable* newSymbolTable();
-void addFunctionToSymbolTable(t_symboltable* symboltable, void* function, int params, char* name);
+void addFunctionToSymbolTable(t_symboltable* symboltable, struct function* func);
 struct function* getFunctionFromSymbolTable(t_symboltable* symboltable, char* name);
 void addObjectToSymbolTable(t_symboltable* symboltable, t_object* symbol, t_object* object, struct node *node);
 void printSymboltable(t_symboltable* symboltable);

@@ -15,5 +15,6 @@ t_object* z_map(t_object* function, t_list* list) {
 
 void init_seq() {
   t_object* (*map)(t_object*, t_list*) = &z_map;
-  addFunctionToSymbolTable(clib_functions, map, 2, "map");
+  struct function* map_ref = newFunction(map, "map", 2);
+  addFunctionToSymbolTable(clib_functions, map_ref);
 }

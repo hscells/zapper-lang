@@ -108,8 +108,6 @@ t_object* parse(char* e) {
       c = e[++i];
     }
 
-    printf("%c",c);
-
     if (c == '(') {
       t_object* nested_expression = newObject();
       nested_expression->value->value = (t_generic_value) z_list()->value->value.l;
@@ -127,11 +125,11 @@ t_object* parse(char* e) {
       // add toke ns which are >1 character in length
       while (c != '(' && c != ',' && c != ')' && c != '{' && c != '}' && c != ' ' && c != '\t' && i < strlen(e)) {
         cToStr[0] = c;
+        cToStr[1] = '\0';
         strcat(tok, cToStr);
         c = e[++i];
       }
       c = e[--i];
-
       type = inferType(tok);
       // printf("this object is of type <%d>: %s\n", type, tok);
       t_object* obj = newObject();
@@ -174,48 +172,57 @@ t_object* parse(char* e) {
         default:
           exception("Could not determine the type of this object", line_count, tok);
       }
-      collect(obj);
     }
   }
-  printf("\n");
   return root_node;
 }
 
 t_object* call(struct function* function, t_list* args) {
   t_list* newargs = z_list()->value->value.l;
   struct atom* currentAtom = args->head;
-  while (currentAtom->next != NULL) {
-    if (z_typeof(currentAtom->value) == List) {
-      z_conj(newargs, eval(currentAtom->value->value->value.l));
+  while (currentAtom != NULL) {
+    printf("length of args: %d\n", z_length(args)->value->value.i);
+    printf("%d\n", currentAtom->value->value->type);
+    if (currentAtom->value->value->type == List) {
+      printf("evaluating nested list... \n");
+      t_object* v = eval(currentAtom->value->value->value.l);
+      printf("result: %d\n", v->value->value.i);
+      z_conj(newargs, v);
     } else {
       z_conj(newargs, currentAtom->value);
     }
     currentAtom = currentAtom->next;
   }
-  return (*function->pointer)(newargs);
+  printf("old args: %d\n",z_length(args)->value->value.i);
+  printf("new args: %d\n",z_length(newargs)->value->value.i);
+  if (z_length(newargs)->value->value.i == function->params) {
+    return (*function->pointer)(newargs);
+  } else {
+    z_exception("Not enough paramaters to function");
+    return NULL;
+  }
 }
 
 t_object* eval(t_list* ast) {
   struct atom* currentAtom = ast->head;
-  t_object* value;
+  t_object* value = newObject();
+  while (currentAtom != NULL) {
 
-  while (currentAtom->next != NULL) {
+    printf("The type of the current node: %d \n", currentAtom->value->value->type);
 
-    z_println(currentAtom->value, NULL);
-
-
-    // if (currentAtom->value->value->type == List) { // is the symbol a nested list?
-    //   printf("entering first expression\n");
-    //   value = eval(currentAtom->value->value->value.l);
-    //   currentAtom = currentAtom->value->value->value.l->tail;
-    // } else if (currentAtom == currentAtom->value->value->value.l->head) { // is the symbol at the start of the list a builtin C function?
-    //   if (inSymboltable(clib_functions, currentAtom->value->value->value.function->name)) {
-    //     // struct function* temp_func = getFunctionFromSymbolTable(clib_functions, currentAtom->value->value->value.function->name);
-    //     // return call(temp_func, z_rest(ast)->value->value.l);
-    //   }
-    // }
+    if (currentAtom->value->value->type == Symbol && currentAtom == ast->head) { // is the symbol at the start of the list a builtin C function?
+      if (inSymboltable(clib_functions, currentAtom->value->value->value.s)) {
+        struct function* temp_func = getFunctionFromSymbolTable(clib_functions, currentAtom->value->value->value.s);
+        return call(temp_func, z_rest(ast)->value->value.l);
+      }
+    } else if (currentAtom->value->value->type == List) { // is the symbol a nested list?
+      printf("evaluating nested expression...\n");
+      value = eval(currentAtom->value->value->value.l);
+      currentAtom = currentAtom->value->value->value.l->tail;
+    }
 
     currentAtom = currentAtom->next;
   }
-  return newObject();
+  free(currentAtom);
+  return value;
 }

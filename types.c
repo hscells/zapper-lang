@@ -1,6 +1,6 @@
 #include "types.h"
 
-struct function* newFunction(void* (f), char* name, int params) {
+struct function* newFunction(t_object* (*f)(), char* name, int params) {
   struct function* function = (struct function*) malloc(sizeof(struct function));
   function->pointer = f;
   function->name = name;

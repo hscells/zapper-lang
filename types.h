@@ -51,7 +51,7 @@ struct atom {
   struct atom* next;
 };
 
-struct function* newFunction(void* (pointer), char* name, int params);
+struct function* newFunction(t_object* (*pointer)(), char* name, int params);
 t_symbol* newSymbol(int pointer, char* name);
 
 #endif

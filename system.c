@@ -34,13 +34,13 @@ t_symboltable* newSymbolTable() {
   return s;
 }
 
-void addFunctionToSymbolTable(t_symboltable* s, void* function, int params, char* name) {
+void addFunctionToSymbolTable(t_symboltable* s, struct function* func) {
   struct t_symboltable_row* row = (struct t_symboltable_row*) malloc(sizeof(struct t_symboltable_row));
-  row->name = name;
+  row->name = func->name;
   row->object = newObject();
 
   row->object->value->type = Function;
-  row->object->value->value.function = newFunction(&function,name,params);
+  row->object->value->value.function = func;
   row->id = row->object->id;
 
   row->next = NULL;

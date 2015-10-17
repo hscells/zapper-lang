@@ -39,12 +39,13 @@ int main(int argc, char const *argv[]) {
   if (buffer) {
     // ast = parse(buffer, mainStack, heap, 0);
     // eval(ast, symboltable, 0, ast->head);
-    printf("Starting eval\n");
-    eval(parse(buffer)->value->value.l);
+    t_list* expressions = parse(buffer)->value->value.l;
+    t_object* value = eval(expressions);
+    free(expressions);
+    free(value);
   } else {
     exception("No input file was specified.",0 ,NULL);
   }
-
   free(clib_functions);
   return 0;
 }

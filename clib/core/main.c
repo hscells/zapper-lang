@@ -26,7 +26,9 @@ t_object* z_add(t_list* args) {
   return result;
 }
 
-t_object* z_sub(t_object* a, t_object* b) {
+t_object* z_sub(t_list* args) {
+  t_object* a = z_nth(args,0);
+  t_object* b = z_nth(args,1);
   t_object* result = newObject();
   if(z_typeof(a) == z_typeof(b) && z_typeof(a) == Int) {
     result->value->value = (t_generic_value) (a->value->value.i - b->value->value.i);
@@ -37,7 +39,9 @@ t_object* z_sub(t_object* a, t_object* b) {
   return result;
 }
 
-t_object* z_mul(t_object* a, t_object* b) {
+t_object* z_mul(t_list* args) {
+  t_object* a = z_nth(args,0);
+  t_object* b = z_nth(args,1);
   t_object* result = newObject();
   if(z_typeof(a) == z_typeof(b) && z_typeof(a) == Int) {
     result->value->value = (t_generic_value) (a->value->value.i * b->value->value.i);
@@ -48,7 +52,9 @@ t_object* z_mul(t_object* a, t_object* b) {
   return result;
 }
 
-t_object* z_div(t_object* a, t_object* b) {
+t_object* z_div(t_list* args) {
+  t_object* a = z_nth(args,0);
+  t_object* b = z_nth(args,1);
   t_object* result = newObject();
   if(z_typeof(a) == z_typeof(b) && z_typeof(a) == Int) {
     result->value->value = (t_generic_value) (a->value->value.i / b->value->value.i);
@@ -59,57 +65,64 @@ t_object* z_div(t_object* a, t_object* b) {
   return result;
 }
 
-void z_print(t_object* o, t_symboltable* s) {
+t_object* z_print(t_list* args) {
+  t_object* obj = newObject();
+  t_object* o = z_first(args);
   if(o == NULL) {
     printf("undefined");
-    return;
+    return obj;
   }
 
   switch(o->value->type) {
     case Int:
       printf("%d", o->value->value.i);
-      return;
+      return obj;
     case Float:
       printf("%f", o->value->value.f);
-      return;
+      return obj;
     case Char:
       printf("%c", o->value->value.c);
-      return;
+      return obj;
     case String:
       printf("%s",o->value->value.s);
-      return;
+      return obj;
     case Bool:
       printf("%d", o->value->value.b);
-      return;
+      return obj;
     case List:
       printf("<List Object>");
-      return;
+      return obj;
     case Exception:
       printf("<Exception Object>");
-      return;
+      return obj;
     case Function:
       printf("<Function Object>");
-      return;
+      return obj;
     case Symbol:
-      z_print(getSymbolByName(s, o),s);
-      return;
+      // z_print(getSymbolByName(s, o),s);
+      return obj;
   }
   printf("<object> @ %d", o->id);
 }
 
-void z_println(t_object* o, t_symboltable* s) {
-  z_print(o,s);
+t_object* z_println(t_list* args) {
+  z_print(args);
   printf("\n");
+  return newObject();
 }
 
-t_object* z_teq(t_object* a, t_object* b) {
+t_object* z_teq(t_list* args) {
+  t_object* a = z_nth(args,0);
+  t_object* b = z_nth(args,1);
   t_object* result = newObject();
   result->value->type = Bool;
   result->value->value = (t_generic_value) (z_typeof(a) == z_typeof(b));
   return result;
 }
 
-t_object* z_eq(t_object* a, t_object* b) {
+t_object* z_eq(t_list* args) {
+  t_object* a = z_nth(args,0);
+  t_object* b = z_nth(args,1);
   t_object* result = newObject();
   result->value->type = Bool;
   if(z_typeof(a) == z_typeof(b)) {
@@ -148,7 +161,9 @@ t_object* z_eq(t_object* a, t_object* b) {
   return result;
 }
 
-t_object* z_lt(t_object* a, t_object* b) {
+t_object* z_lt(t_list* args) {
+  t_object* a = z_nth(args,0);
+  t_object* b = z_nth(args,1);
   t_object* result = newObject();
   result->value->type = Bool;
   if(z_typeof(a) == z_typeof(b)) {
@@ -187,7 +202,9 @@ t_object* z_lt(t_object* a, t_object* b) {
   return result;
 }
 
-t_object* z_gt(t_object* a, t_object* b) {
+t_object* z_gt(t_list* args) {
+  t_object* a = z_nth(args,0);
+  t_object* b = z_nth(args,1);
   t_object* result = newObject();
   result->value->type = Bool;
   if(z_typeof(a) == z_typeof(b)) {
@@ -226,7 +243,9 @@ t_object* z_gt(t_object* a, t_object* b) {
   return result;  return result;
 }
 
-t_object* z_lteq(t_object* a, t_object* b) {
+t_object* z_lteq(t_list* args) {
+  t_object* a = z_nth(args,0);
+  t_object* b = z_nth(args,1);
   t_object* result = newObject();
   result->value->type = Bool;
   if(z_typeof(a) == z_typeof(b)) {
@@ -265,7 +284,9 @@ t_object* z_lteq(t_object* a, t_object* b) {
   return result;
 }
 
-t_object* z_gteq(t_object* a, t_object* b){
+t_object* z_gteq(t_list* args){
+  t_object* a = z_nth(args,0);
+  t_object* b = z_nth(args,1);
   t_object* result = newObject();
   result->value->type = Bool;
   if(z_typeof(a) == z_typeof(b)) {
@@ -309,6 +330,38 @@ void z_exit() {
 }
 
 void init_core() {
+
   t_object* (*add)(t_list* args) = &z_add;
-  addFunctionToSymbolTable(clib_functions, add, 2, "+");
+  struct function* add_ref = newFunction(add,"+",2);
+  addFunctionToSymbolTable(clib_functions, add_ref);
+
+  t_object* (*sub)(t_list* args) = &z_sub;
+  struct function* sub_ref = newFunction(sub,"-",2);
+  addFunctionToSymbolTable(clib_functions, sub_ref);
+
+  t_object* (*div)(t_list* args) = &z_div;
+  struct function* div_ref = newFunction(div,"/",2);
+  addFunctionToSymbolTable(clib_functions, div_ref);
+
+  t_object* (*mul)(t_list* args) = &z_mul;
+  struct function* mul_ref = newFunction(mul,"*",2);
+  addFunctionToSymbolTable(clib_functions, mul_ref);
+
+  t_object* (*eq)(t_list* args) = &z_eq;
+  struct function* eq_ref = newFunction(eq,"=",2);
+  addFunctionToSymbolTable(clib_functions, eq_ref);
+
+  t_object* (*lt)(t_list* args) = &z_lt;
+  struct function* lt_ref = newFunction(lt,"<",2);
+  addFunctionToSymbolTable(clib_functions, lt_ref);
+
+  t_object* (*gt)(t_list* args) = &z_gt;
+  struct function* gt_ref = newFunction(gt,">",2);
+  addFunctionToSymbolTable(clib_functions, gt_ref);
+
+  t_object* (*println)(t_list* args) = &z_println;
+  struct function* println_ref = newFunction(println,"println",1);
+  addFunctionToSymbolTable(clib_functions, println_ref);
+
+
 }
