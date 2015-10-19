@@ -11,70 +11,73 @@
 int LINE_NUMBER;
 char* CURRENT_TOKEN;
 
-struct t_symboltable_row{
-  t_object* object;
+char* ZLIB_PATH;
+
+struct symboltable_row_t {
+  object_t* object;
   char* name;
   int id;
-  struct t_symboltable_row* next;
+  struct symboltable_row_t* next;
 };
 
 typedef struct {
-  struct t_symboltable_row* tail;
-  struct t_symboltable_row* head;
+  struct symboltable_row_t* tail;
+  struct symboltable_row_t* head;
   int current;
-} t_symboltable;
+} symboltable_t;
 
-t_symboltable *clib_functions;
-t_symboltable *globals;
+symboltable_t *clib_functions;
+symboltable_t *globals;
+symboltable_t *imports;
 
-t_generic* newGeneric();
+generic_t* newGeneric();
 
-t_object* z_print(t_list* arg);
-t_object* z_println(t_list* arg);
-t_object* z_read();
+object_t* z_print(list_t* arg);
+object_t* z_println(list_t* arg);
+object_t* z_read();
 
-enum t_type z_typeof(t_object* o);
+enum t_type z_typeof(object_t* o);
 void exception(char* e, int line_num, char* token);
 void z_exception(char* e);
 
-t_object* z_add(t_list* args);
-t_object* z_sub(t_list* args);
-t_object* z_mul(t_list* args);
-t_object* z_div(t_list* args);
+object_t* z_add(list_t* args);
+object_t* z_sub(list_t* args);
+object_t* z_mul(list_t* args);
+object_t* z_div(list_t* args);
 
-t_object* z_teq(t_list* args);
-t_object* z_eq(t_list* args);
-t_object* z_lt(t_list* args);
-t_object* z_gt(t_list* args);
-t_object* z_lteq(t_list* args);
-t_object* z_gteq(t_list* args);
+object_t* z_teq(list_t* args);
+object_t* z_eq(list_t* args);
+object_t* z_lt(list_t* args);
+object_t* z_gt(list_t* args);
+object_t* z_lteq(list_t* args);
+object_t* z_gteq(list_t* args);
 
-t_object* z_list();
-t_object* z_list_obj(t_list* list);
-t_object* z_conj(t_list* list, t_object* o);
-t_object* z_first(t_list* list);
-t_object* z_rest(t_list* list);
-t_object* z_nth(t_list* list, int index);
-t_object* z_length(t_list* list);
+object_t* z_list();
+object_t* z_list_obj(list_t* list);
+object_t* z_conj(list_t* list, object_t* o);
+object_t* z_first(list_t* list);
+object_t* z_rest(list_t* list);
+object_t* z_nth(list_t* list, int index);
+object_t* z_length(list_t* list);
 
-t_object* z_int(int x);
-t_object* z_string(char* x);
+object_t* z_int(int x);
+object_t* z_string(char* x);
 
 void init_system();
 void init_core();
-void init_lists();
+void inilist_ts();
 void init_seq();
 
-t_symboltable* newSymbolTable();
-void addFunctionToSymbolTable(t_symboltable* symboltable, struct function* func);
-void addObjectToSymbolTable(t_symboltable* s, t_object* symbol, t_object* object);
-struct function* getFunctionFromSymbolTable(t_symboltable* symboltable, char* name);
-void printSymboltable(t_symboltable* symboltable);
-bool inSymboltable(t_symboltable* s, char* name);
+symboltable_t* newSymbolTable();
+void addFunctionToSymbolTable(symboltable_t* symboltable, struct function* func);
+void addObjectToSymbolTable(symboltable_t* s, object_t* symbol, object_t* object);
+struct function* getFunctionFromSymbolTable(symboltable_t* symboltable, char* name);
+void printSymboltable(symboltable_t* symboltable);
+bool inSymboltable(symboltable_t* s, char* name);
 
-t_object* getSymbolByName(t_symboltable* symboltable, char* name);
-t_list* getFunctionParams(t_symboltable* symboltable, t_object* o);
+object_t* getSymbolByName(symboltable_t* symboltable, char* name);
+list_t* getFunctionParams(symboltable_t* symboltable, object_t* o);
 
-t_object* eval(t_list* ast, t_symboltable* context);
-t_object* call(struct function* func, t_list* args, t_symboltable* context);
+object_t* eval(list_t* ast, symboltable_t* context);
+object_t* call(struct function* func, list_t* args, symboltable_t* context);
 #endif

@@ -16,17 +16,17 @@ int newObjectId() {
   return object_id++;
 }
 
-t_object* newObject() {
-  t_object *obj = (t_object*) malloc(sizeof(t_object));
+object_t* newObject() {
+  object_t *obj = (object_t*) malloc(sizeof(object_t));
   obj->id = newObjectId();
   obj->value = newGeneric();
   return obj;
 }
 
-t_object* newList(t_list* list) {
-  t_object *obj = (t_object*) malloc(sizeof(t_object));
+object_t* newList(list_t* list) {
+  object_t *obj = (object_t*) malloc(sizeof(object_t));
   obj->id = newObjectId();
-  obj->value->value = (t_generic_value) list;
+  obj->value->value = (generic_value_t) list;
   obj->value->type = List;
   return obj;
 }

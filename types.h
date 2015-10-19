@@ -12,7 +12,7 @@ struct function;
 typedef struct {
   struct atom* head;
   struct atom* tail;
-} t_list;
+} list_t;
 
 typedef struct {
   int pointer;
@@ -25,41 +25,41 @@ typedef union {
   char*       s;
   double      f;
   bool        b;
-  t_list*     l;
+  list_t*     l;
   t_symbol*   symbol;
   struct function* function;
-} t_generic_value;
+} generic_value_t;
 
 typedef struct {
-  t_generic_value value;
+  generic_value_t value;
   enum t_type type;
-} t_generic;
+} generic_t;
 
 typedef struct {
-  t_generic* value;
+  generic_t* value;
   int id;
-} t_object;
+} object_t;
 
 struct function {
   // store if the function is C code or zapper code
   bool native;
   // if it's C code, the function pointer is stored here
-  t_object* (*pointer)(t_list* args);
+  object_t* (*pointer)(list_t* args);
   // if it's zapper code, the body and arguments are stored here
-  t_list* body;
-  t_list* args;
+  list_t* body;
+  list_t* args;
   // both C and zapper code use these
   char* name;
   int params;
 };
 
 struct atom {
-  t_object* value;
+  object_t* value;
   struct atom* next;
 };
 
-struct function* newFunction(t_object* (*pointer)(), char* name, int params);
-struct function* newZFunction(char* name, t_list* args, t_list* body, int params);
+struct function* newFunction(object_t* (*pointer)(), char* name, int params);
+struct function* newZFunction(char* name, list_t* args, list_t* body, int params);
 t_symbol* newSymbol(int pointer, char* name);
 
 #endif

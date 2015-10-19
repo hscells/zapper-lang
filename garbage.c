@@ -1,10 +1,10 @@
 #include "garbage.h"
 
-void collect(t_object* obj) {
+void collect(object_t* obj) {
   free(obj);
 }
 
-void collect_list(t_list* list) {
+void colleclist_t(list_t* list) {
   struct atom* node = list->head;
   while (node != NULL) {
     struct atom* temp = node;
@@ -14,8 +14,8 @@ void collect_list(t_list* list) {
   list->head = NULL;
 }
 
-void collect_symboltable(t_symboltable* s) {
-  struct t_symboltable_row* curr = s->head;
+void collecsymboltable_t(symboltable_t* s) {
+  struct symboltable_row_t* curr = s->head;
   while ((curr = s->head) != NULL) {
     s->head = s->head->next;
     free(curr->object);

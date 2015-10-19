@@ -60,12 +60,12 @@ typedef struct {
 struct node {
   int id;
   int token;
-  t_object* object;
+  object_t* object;
   struct node *next;
   struct node *prev; // prev actually isn't used
   int line_num;
 };
 
 // union token initTokens();
-t_object* parse(char* e);
+object_t* parse(char* e);
 #endif

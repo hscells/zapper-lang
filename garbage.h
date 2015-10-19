@@ -5,8 +5,8 @@
 #include "objects.h"
 #include "system.h"
 
-void collect(t_object* obj);
-void collect_list(t_list* list);
-void collect_symboltable(t_symboltable* s);
+void collect(object_t* obj);
+void colleclist_t(list_t* list);
+void collecsymboltable_t(symboltable_t* s);
 
 #endif

@@ -1,6 +1,6 @@
 #include "types.h"
 
-struct function* newFunction(t_object* (*f)(), char* name, int params) {
+struct function* newFunction(object_t* (*f)(), char* name, int params) {
   struct function *function = (struct function*) malloc(sizeof(struct function));
   function->native = true;
   function->pointer = f;
@@ -10,7 +10,7 @@ struct function* newFunction(t_object* (*f)(), char* name, int params) {
   return function;
 }
 
-struct function* newZFunction(char* name, t_list* args, t_list* body, int params) {
+struct function* newZFunction(char* name, list_t* args, list_t* body, int params) {
   struct function *function = (struct function*) malloc(sizeof(struct function));
   function->native = false;
   function->name = (char* ) malloc(255);

@@ -1,10 +1,10 @@
 #include "../../system.h"
 
-t_object* z_map(t_object* function, t_list* list) {
+object_t* z_map(object_t* function, list_t* list) {
   struct atom* item = list->head;
-  t_list* new_list = z_list()->value->value.l;
+  list_t* new_list = z_list()->value->value.l;
   while (item->next != NULL) {
-    t_list* eval_list = z_list()->value->value.l;
+    list_t* eval_list = z_list()->value->value.l;
     z_conj(eval_list, function);
     z_conj(eval_list, item->value);
     z_conj(new_list, eval(eval_list, globals));
@@ -14,7 +14,7 @@ t_object* z_map(t_object* function, t_list* list) {
 }
 
 void init_seq() {
-  t_object* (*map)(t_object*, t_list*) = &z_map;
+  object_t* (*map)(object_t*, list_t*) = &z_map;
   struct function* map_ref = newFunction(map, "map", 2);
   addFunctionToSymbolTable(clib_functions, map_ref);
 }

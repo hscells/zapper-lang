@@ -4,7 +4,7 @@
 #include "types.h"
 
 int newObjectId();
-t_object* newObject();
-t_object* newList();
+object_t* newObject();
+object_t* newList();
 
 #endif

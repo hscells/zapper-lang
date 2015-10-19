@@ -57,7 +57,7 @@ enum t_type inferType(char* token) {
   return Exception;
 }
 
-void printast(t_list* ast, int t) {
+void printast(list_t* ast, int t) {
   struct atom* a = ast->head;
   while (a != NULL) {
     if (a->value->value->type == List) {
@@ -72,20 +72,20 @@ void printast(t_list* ast, int t) {
   }
 }
 
-t_object* parse(char* e) {
+object_t* parse(char* e) {
   int i;
   char c;
   enum t_type type;
   char tok[255];
   char cToStr[2];
 
-  t_list* ast = malloc(sizeof(t_list*) * 256);
+  list_t* ast = malloc(sizeof(list_t*) * 256);
 
-  t_list* expressions = z_list()->value->value.l;
-  // t_list* parent_list = expressions;
-  t_list* current_list = expressions;
-  t_object* root_node = newObject();
-  root_node->value->value = (t_generic_value) expressions;
+  list_t* expressions = z_list()->value->value.l;
+  // list_t* parenlist_t = expressions;
+  list_t* currenlist_t = expressions;
+  object_t* root_node = newObject();
+  root_node->value->value = (generic_value_t) expressions;
   root_node->value->type = List;
   int line_count = 0;
 
@@ -113,25 +113,39 @@ t_object* parse(char* e) {
       c = e[++i];
     }
 
-    if (c == '(') {
+    if (c == '"') {
+      c = e[++i];
+      while (c != '"' && i < strlen(e)) {
+        cToStr[0] = c;
+        cToStr[1] = '\0';
+        strcat(tok, cToStr);
+        c = e[++i];
+      }
+      object_t* obj = newObject();
+      char* copy = malloc(strlen(tok) + 1);
+      strcpy(copy, tok);
+      obj->value->type = String;
+      obj->value->value.s = copy;
+      z_conj(currenlist_t, obj);
+    } else if (c == '(') {
 
       // create a new object to store the nested expression
-      t_object* nested_expression = newObject();
-      nested_expression->value->value = (t_generic_value) z_list()->value->value.l;
+      object_t* nested_expression = newObject();
+      nested_expression->value->value = (generic_value_t) z_list()->value->value.l;
       nested_expression->value->type = List;
 
       // join the new nested expression onto the parent expression
-      z_conj(current_list, nested_expression);
+      z_conj(currenlist_t, nested_expression);
 
       // maintain a reference to the parent list
-      ast[++b_count] = *current_list;
+      ast[++b_count] = *currenlist_t;
 
       // continue to parse the nested expression
-      current_list = nested_expression->value->value.l;
+      currenlist_t = nested_expression->value->value.l;
     }
 
     else if (c == ')') {
-      current_list = &ast[b_count--];
+      currenlist_t = &ast[b_count--];
     }
 
     else {
@@ -145,23 +159,23 @@ t_object* parse(char* e) {
       type = inferType(tok);
       if (type != Exception){
         // printf("this object is of type <%d>: %s\n", type, tok);
-        t_object* obj = newObject();
+        object_t* obj = newObject();
         char* copy;
         switch(type) {
           case Int:
-            obj->value->value = (t_generic_value) atoi(tok);
+            obj->value->value = (generic_value_t) atoi(tok);
             obj->value->type = Int;
-            z_conj(current_list, obj);
+            z_conj(currenlist_t, obj);
             break;
           case Char:
-            obj->value->value = (t_generic_value) tok[0];
+            obj->value->value = (generic_value_t) tok[0];
             obj->value->type = Char;
-            z_conj(current_list, obj);
+            z_conj(currenlist_t, obj);
             break;
           case Float:
-            obj->value->value = (t_generic_value) atof(tok);
+            obj->value->value = (generic_value_t) atof(tok);
             obj->value->type = Char;
-            z_conj(current_list, obj);
+            z_conj(currenlist_t, obj);
             break;
           // strings and symbols are a little more tricky, because of pointers
           // so we need to allocate space for the new char*
@@ -170,7 +184,7 @@ t_object* parse(char* e) {
             strcpy(copy, tok);
             obj->value->type = Symbol;
             obj->value->value.s = copy;
-            z_conj(current_list, obj);
+            z_conj(currenlist_t, obj);
             break;
           case Function:
            break;
@@ -193,12 +207,12 @@ t_object* parse(char* e) {
   return root_node;
 }
 
-t_object* cond(t_list* conditions, t_symboltable* context) {
+object_t* cond(list_t* conditions, symboltable_t* context) {
   struct atom* cond = conditions->head;
   while (cond != NULL) {
     if (cond->value->value->type == List) {
       if (z_nth(cond->value->value->value.l, 0)->value->type == List && z_nth(cond->value->value->value.l, 1)->value->type == List){
-        t_object* result = eval(z_nth(cond->value->value->value.l, 0)->value->value.l, context);
+        object_t* result = eval(z_nth(cond->value->value->value.l, 0)->value->value.l, context);
         if (result->value->type == Bool){
           if (result->value->value.b) {
             return eval(z_nth(cond->value->value->value.l, 1)->value->value.l, context);
@@ -217,8 +231,8 @@ t_object* cond(t_list* conditions, t_symboltable* context) {
   return NULL;
 }
 
-t_object* call(struct function* function, t_list* args, t_symboltable* context) {
-  t_list* newargs = z_list()->value->value.l;
+object_t* call(struct function* function, list_t* args, symboltable_t* context) {
+  list_t* newargs = z_list()->value->value.l;
   struct atom* currentAtom = args->head;
 
   // function definitions require a little trickery and for their parameters to not be evaluated
@@ -242,7 +256,7 @@ t_object* call(struct function* function, t_list* args, t_symboltable* context) 
     while (currentAtom != NULL) {
       // recursively evaluate and substitite the parameters
       if (currentAtom->value->value->type == List) {
-        t_object* v = eval(currentAtom->value->value->value.l, context);
+        object_t* v = eval(currentAtom->value->value->value.l, context);
         z_conj(newargs, v);
       } else if (currentAtom->value->value->type == Symbol) {
         if (inSymboltable(globals, currentAtom->value->value->value.s)) {
@@ -264,8 +278,8 @@ t_object* call(struct function* function, t_list* args, t_symboltable* context) 
       if (function->native) {
         return (*function->pointer)(newargs);
       } else {
-        t_symboltable* new_context = newSymbolTable();
-        t_list* func_ast = function->body;
+        symboltable_t* new_context = newSymbolTable();
+        list_t* func_ast = function->body;
         for (int i = 0; i < function->params; i++){
             addObjectToSymbolTable(new_context, z_nth(function->args, i), z_nth(newargs, i));
         }
@@ -278,17 +292,20 @@ t_object* call(struct function* function, t_list* args, t_symboltable* context) 
   }
 }
 
-t_object* eval(t_list* ast, t_symboltable* context) {
+object_t* eval(list_t* ast, symboltable_t* context) {
   struct atom* currentAtom = ast->head;
-  t_object* value = newObject();
+  object_t* value = newObject();
   while (currentAtom != NULL) {
 
-    if (currentAtom->value->value->type == Symbol && currentAtom == ast->head) { // is the symbol at the start of the list a builtin C function?
+    if (currentAtom->value->value->type == Symbol && currentAtom == ast->head) { // is the symbol at the start of the list a function?
       if (inSymboltable(clib_functions, currentAtom->value->value->value.s)) {
         struct function* temp_func = getFunctionFromSymbolTable(clib_functions, currentAtom->value->value->value.s);
         return call(temp_func, z_rest(ast)->value->value.l, context);
       } else if (inSymboltable(globals, currentAtom->value->value->value.s)) {
         struct function* temp_func = getFunctionFromSymbolTable(globals, currentAtom->value->value->value.s);
+        return call(temp_func, z_rest(ast)->value->value.l, context);
+      } else if (inSymboltable(context, currentAtom->value->value->value.s)) {
+        struct function* temp_func = getFunctionFromSymbolTable(context, currentAtom->value->value->value.s);
         return call(temp_func, z_rest(ast)->value->value.l, context);
       } else {
         exception("Function does not exist in the local or global scope.", -1, currentAtom->value->value->value.s);

@@ -1,42 +1,42 @@
 #include <string.h>
 #include "system.h"
 
-t_generic* newGeneric() {
-  return (t_generic*) malloc(sizeof(t_generic));
+generic_t* newGeneric() {
+  return (generic_t*) malloc(sizeof(generic_t));
 }
 
-enum t_type z_typeof(t_object* o) {
+enum t_type z_typeof(object_t* o) {
   return o->value->type;
 }
 
-t_object* z_read() {
-  t_object* result = newObject();
+object_t* z_read() {
+  object_t* result = newObject();
   return result;
 }
 
-t_object* z_int(int x) {
-  t_object* obj = newObject();
+object_t* z_int(int x) {
+  object_t* obj = newObject();
   obj->value->type = Int;
   obj->value->value.i = x;
   return obj;
 }
 
-t_object* z_string(char* x) {
-  t_object* obj = newObject();
+object_t* z_string(char* x) {
+  object_t* obj = newObject();
   obj->value->type = String;
   obj->value->value.s = x;
   return obj;
 }
 
-t_symboltable* newSymbolTable() {
-  t_symboltable *s = (t_symboltable*) malloc(sizeof(t_symboltable));
+symboltable_t* newSymbolTable() {
+  symboltable_t *s = (symboltable_t*) malloc(sizeof(symboltable_t));
   s->head = NULL;
   s->tail = NULL;
   return s;
 }
 
-void addFunctionToSymbolTable(t_symboltable* s, struct function* func) {
-  struct t_symboltable_row* row = (struct t_symboltable_row*) malloc(sizeof(struct t_symboltable_row));
+void addFunctionToSymbolTable(symboltable_t* s, struct function* func) {
+  struct symboltable_row_t* row = (struct symboltable_row_t*) malloc(sizeof(struct symboltable_row_t));
   row->name = func->name;
   row->object = newObject();
 
@@ -54,8 +54,8 @@ void addFunctionToSymbolTable(t_symboltable* s, struct function* func) {
 
 }
 
-struct function* getFunctionFromSymbolTable(t_symboltable* s, char* name) {
-  struct t_symboltable_row* r = s->head;
+struct function* getFunctionFromSymbolTable(symboltable_t* s, char* name) {
+  struct symboltable_row_t* r = s->head;
   while (r != NULL) {
     if (strcmp(r->name, name) == 0) {
       return r->object->value->value.function;
@@ -66,8 +66,8 @@ struct function* getFunctionFromSymbolTable(t_symboltable* s, char* name) {
   return NULL;
 }
 
-void addObjectToSymbolTable(t_symboltable* s, t_object* symbol, t_object* object) {
-  struct t_symboltable_row* row = (struct t_symboltable_row*) malloc(sizeof(struct t_symboltable_row));
+void addObjectToSymbolTable(symboltable_t* s, object_t* symbol, object_t* object) {
+  struct symboltable_row_t* row = (struct symboltable_row_t*) malloc(sizeof(struct symboltable_row_t));
   row->name = symbol->value->value.s;
   if (object != NULL) {
     row->object = object;
@@ -84,8 +84,8 @@ void addObjectToSymbolTable(t_symboltable* s, t_object* symbol, t_object* object
   }
 }
 
-bool inSymboltable(t_symboltable* s, char* name) {
-  struct t_symboltable_row* r = s->head;
+bool inSymboltable(symboltable_t* s, char* name) {
+  struct symboltable_row_t* r = s->head;
   while(r != NULL) {
     if (strcmp(r->name, name) == 0) {
       return true;
@@ -95,8 +95,8 @@ bool inSymboltable(t_symboltable* s, char* name) {
   return false;
 }
 
-void printSymboltable(t_symboltable* s) {
-  struct t_symboltable_row* r = s->head;
+void printSymboltable(symboltable_t* s) {
+  struct symboltable_row_t* r = s->head;
   printf("Current Symboltable:\n");
   while(r != NULL) {
     printf("\tname: %s\n", r->name);
@@ -104,8 +104,8 @@ void printSymboltable(t_symboltable* s) {
   }
 }
 
-t_object* getSymbolByName(t_symboltable* s, char* name) {
-  struct t_symboltable_row* r = s->head;
+object_t* getSymbolByName(symboltable_t* s, char* name) {
+  struct symboltable_row_t* r = s->head;
   while (r != NULL) {
     if (strcmp(r->name, name) == 0) {
       return r->object;
@@ -119,8 +119,27 @@ t_object* getSymbolByName(t_symboltable* s, char* name) {
 void init_system() {
   clib_functions = newSymbolTable();
   globals = newSymbolTable();
+  imports = newSymbolTable();
+
+  object_t* z_True = newObject();
+  object_t* z_True_symbol = newObject();
+  object_t* z_False = newObject();
+  object_t* z_False_symbol = newObject();
+
+  z_True->value->value.b = true;
+  z_True->value->type = Bool;
+  z_True_symbol->value->value.s = "True";
+  z_True_symbol->value->type = Symbol;
+
+  z_False->value->value.b = false;
+  z_False->value->type = Bool;
+  z_False_symbol->value->value.s = "False";
+  z_False_symbol->value->type = Symbol;
+
+  addObjectToSymbolTable(globals, z_True_symbol, z_True);
+  addObjectToSymbolTable(globals, z_False_symbol, z_False);
 
   init_core();
-  init_lists();
+  inilist_ts();
   init_seq();
 }

@@ -13,6 +13,11 @@ void repl_init();
 
 int main(int argc, char const *argv[]) {
 
+  ZLIB_PATH = getenv("ZLIB_PATH");
+  if (ZLIB_PATH == NULL) {
+    // printf("$ZLIB_PATH is not set. Using cwd for libraries and imports");
+  }
+
   // these next lines are used to read a file in for evaluation
   char *buffer = 0;
   long length;
@@ -36,13 +41,13 @@ int main(int argc, char const *argv[]) {
 
   if (buffer) {
     init_system();
-    t_symboltable* context = newSymbolTable();
-    t_list* expressions = parse(buffer)->value->value.l;
-    t_object* value = eval(expressions, context);
+    symboltable_t* context = newSymbolTable();
+    list_t* expressions = parse(buffer)->value->value.l;
+    object_t* value = eval(expressions, context);
     free(expressions);
     free(value);
     if (clib_functions->head != clib_functions->tail) {
-      collect_symboltable(clib_functions);
+      collecsymboltable_t(clib_functions);
     }
   } else {
     exception("No input file was specified.",0 ,NULL);
@@ -55,7 +60,7 @@ void repl_init() {
   printf("%s", ">>> ");
   while (EXIT_STATUS == 0 && fgets(input, INPUT_SIZE, stdin)) {
 
-    // t_symboltable* symboltable = newSymbolTable();
+    // symboltable_t* symboltable = newSymbolTable();
 
     if (EXIT_STATUS == 0) {
       printf("%s", ">>> ");
