@@ -14,11 +14,6 @@ typedef struct {
   struct atom* tail;
 } list_t;
 
-typedef struct {
-  int pointer;
-  char* name;
-} t_symbol;
-
 typedef union {
   int         i;
   char        c;
@@ -26,7 +21,6 @@ typedef union {
   double      f;
   bool        b;
   list_t*     l;
-  t_symbol*   symbol;
   struct function* function;
 } generic_value_t;
 
@@ -60,6 +54,5 @@ struct atom {
 
 struct function* newFunction(object_t* (*pointer)(), char* name, int params);
 struct function* newZFunction(char* name, list_t* args, list_t* body, int params);
-t_symbol* newSymbol(int pointer, char* name);
 
 #endif

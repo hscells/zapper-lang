@@ -20,10 +20,3 @@ struct function* newZFunction(char* name, list_t* args, list_t* body, int params
   function->params = params;
   return function;
 }
-
-t_symbol* newSymbol(int pointer, char* name) {
-  t_symbol *symbol = (t_symbol*) malloc(sizeof(t_symbol));
-  symbol->pointer = pointer;
-  symbol->name = name;
-  return symbol;
-}
