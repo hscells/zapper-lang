@@ -14,20 +14,6 @@
 
 int node_id = 0;
 
-
-/**
- * clean up a list structure
- * @param l the list
- */
-void collect_list(t_list* l) {
-  struct atom* curr = l->head;
-  struct atom* head = l->head;
-  while((curr = head) != NULL) {
-    head = head->next;
-    free(curr);
-  }
-}
-
 /**
  * given a char pointer, try to infer the type of the actual value
  * @param  token the token being looked at

@@ -31,6 +31,7 @@ t_object* z_string(char* x) {
 t_symboltable* newSymbolTable() {
   t_symboltable *s = (t_symboltable*) malloc(sizeof(t_symboltable));
   s->head = NULL;
+  s->tail = NULL;
   return s;
 }
 
@@ -51,6 +52,7 @@ void addFunctionToSymbolTable(t_symboltable* s, struct function* func) {
     s->tail->next = row;
     s->tail = row;
   }
+
 }
 
 struct function* getFunctionFromSymbolTable(t_symboltable* s, char* name) {
@@ -116,7 +118,7 @@ t_object* getSymbolByName(t_symboltable* s, t_object* o) {
 }
 
 void init_system() {
-  clib_functions = (t_symboltable*) malloc(sizeof(t_symboltable));
+  clib_functions = newSymbolTable();
   init_core();
   init_lists();
   init_seq();

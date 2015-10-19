@@ -4,7 +4,6 @@
 #include <stdlib.h>
 #include "types.h"
 #include "objects.h"
-#include "garbage.h"
 
 typedef struct {
   int START;

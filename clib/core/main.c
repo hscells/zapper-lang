@@ -343,7 +343,7 @@ t_object* z_fn(t_list* args) {
 void init_core() {
 
   t_object* (*fn)(t_list* args) = &z_fn;
-  struct function* fn_ref = newFunction(fn,"+",2);
+  struct function* fn_ref = newFunction(fn,"fn",2);
   addFunctionToSymbolTable(clib_functions, fn_ref);
 
   t_object* (*add)(t_list* args) = &z_add;
