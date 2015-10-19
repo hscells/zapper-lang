@@ -9,7 +9,7 @@
 #define EOL '\n'
 
 #define NUMBERS "1234567890"
-#define CHARACTERS "!?-_abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+#define CHARACTERS "!?-+*/_abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 #define PRECISION "."
 
 int node_id = 0;
@@ -65,10 +65,12 @@ enum t_type inferType(char* token) {
     return Int;
   } else if (contains_number && contains_precision && !contains_char) {
     return Float;
+  } else if (contains_char && strlen(token) > 0) {
+    return Symbol;
   }
 
   // wtf do I do now?
-  return Symbol;
+  return Exception;
 }
 
 void printast(t_list* ast, int t) {
@@ -93,13 +95,17 @@ t_object* parse(char* e) {
   char tok[255];
   char cToStr[2];
 
+  t_list* ast = malloc(sizeof(t_list*) * 256);
+
   t_list* expressions = z_list()->value->value.l;
-  t_list* parent_list = expressions;
+  // t_list* parent_list = expressions;
+  t_list* current_list = expressions;
   t_object* root_node = newObject();
   root_node->value->value = (t_generic_value) expressions;
   root_node->value->type = List;
-  t_list* current_list = expressions;
   int line_count = 0;
+
+  int b_count = 0;
 
   for(i = 0; i < strlen(e) - 1; i++) {
 
@@ -108,8 +114,7 @@ t_object* parse(char* e) {
     // skip over comments
     if (c == ';') {
       while (c != EOL) {
-        i++;
-        c = e[i];
+        c = e[++i];
       }
     }
 
@@ -125,16 +130,24 @@ t_object* parse(char* e) {
     }
 
     if (c == '(') {
+
+      // create a new object to store the nested expression
       t_object* nested_expression = newObject();
       nested_expression->value->value = (t_generic_value) z_list()->value->value.l;
       nested_expression->value->type = List;
+
+      // join the new nested expression onto the parent expression
       z_conj(current_list, nested_expression);
-      parent_list = current_list;
+
+      // maintain a reference to the parent list
+      ast[++b_count] = *current_list;
+
+      // continue to parse the nested expression
       current_list = nested_expression->value->value.l;
     }
 
     else if (c == ')') {
-      current_list = parent_list;
+      current_list = &ast[b_count--];
     }
 
     else {
@@ -146,49 +159,52 @@ t_object* parse(char* e) {
       }
       c = e[--i];
       type = inferType(tok);
-      printf("this object is of type <%d>: %s\n", type, tok);
-      t_object* obj = newObject();
-      char* copy;
-      switch(type) {
-        case Int:
-          obj->value->value = (t_generic_value) atoi(tok);
-          obj->value->type = Int;
-          z_conj(current_list, obj);
-          break;
-        case Char:
-          obj->value->value = (t_generic_value) tok[0];
-          obj->value->type = Char;
-          z_conj(current_list, obj);
-          break;
-        case Float:
-          obj->value->value = (t_generic_value) atof(tok);
-          obj->value->type = Char;
-          z_conj(current_list, obj);
-          break;
-        // strings and symbols are a little more tricky, because of pointers
-        // so we need to allocate space for the new char*
-        case Symbol:
-          copy = malloc(strlen(tok) + 1);
-          strcpy(copy, tok);
-          obj->value->type = Symbol;
-          obj->value->value.s = copy;
-          z_conj(current_list, obj);
-          break;
-        case Function:
-         break;
-        case List:
-          break;
-        case String:
-          break;
-        case Bool:
-          break;
-        case Exception:
-          break;
-        default:
-          exception("Could not determine the type of this object", line_count, tok);
+      if (type != Exception){
+        printf("this object is of type <%d>: %s\n", type, tok);
+        t_object* obj = newObject();
+        char* copy;
+        switch(type) {
+          case Int:
+            obj->value->value = (t_generic_value) atoi(tok);
+            obj->value->type = Int;
+            z_conj(current_list, obj);
+            break;
+          case Char:
+            obj->value->value = (t_generic_value) tok[0];
+            obj->value->type = Char;
+            z_conj(current_list, obj);
+            break;
+          case Float:
+            obj->value->value = (t_generic_value) atof(tok);
+            obj->value->type = Char;
+            z_conj(current_list, obj);
+            break;
+          // strings and symbols are a little more tricky, because of pointers
+          // so we need to allocate space for the new char*
+          case Symbol:
+            copy = malloc(strlen(tok) + 1);
+            strcpy(copy, tok);
+            obj->value->type = Symbol;
+            obj->value->value.s = copy;
+            z_conj(current_list, obj);
+            break;
+          case Function:
+           break;
+          case List:
+            break;
+          case String:
+            break;
+          case Bool:
+            break;
+          case Exception:
+            break;
+          default:
+            exception("Could not determine the type of this object", line_count, tok);
+        }
       }
     }
   }
+  printf("there are %d expression(s) in root s-expression\n", z_length(expressions)->value->value.i);
   printast(expressions, -1);
   return root_node;
 }
@@ -212,7 +228,7 @@ t_object* call(struct function* function, t_list* args) {
   if (z_length(newargs)->value->value.i == function->params) {
     return (*function->pointer)(newargs);
   } else {
-    z_exception("Not enough paramaters to function");
+    z_exception("Parameter count mismatch.");
     return NULL;
   }
 }
@@ -226,12 +242,15 @@ t_object* eval(t_list* ast) {
 
     if (currentAtom->value->value->type == Symbol && currentAtom == ast->head) { // is the symbol at the start of the list a builtin C function?
       if (inSymboltable(clib_functions, currentAtom->value->value->value.s)) {
+        printf("evaluating the expression\n");
         struct function* temp_func = getFunctionFromSymbolTable(clib_functions, currentAtom->value->value->value.s);
         return call(temp_func, z_rest(ast)->value->value.l);
       }
-    } else if (currentAtom->value->value->type == List) { // is the symbol a nested list?
+    }
+
+    else if (currentAtom->value->value->type == List) { // is the symbol a nested list?
       printf("evaluating nested expression...\n");
-      return eval(currentAtom->value->value->value.l);
+      value = eval(currentAtom->value->value->value.l);
     }
 
     currentAtom = currentAtom->next;

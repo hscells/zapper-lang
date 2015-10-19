@@ -325,11 +325,26 @@ t_object* z_gteq(t_list* args){
   return result;
 }
 
-void z_exit() {
-  exit(1);
+t_object* z_exit(t_list* args) {
+  if (z_nth(args, 0)->value->type == Int) {
+    exit(z_nth(args, 0)->value->value.i);
+  } else {
+    exit(2);
+  }
+}
+
+t_object* z_fn(t_list* args) {
+  t_object* obj = newObject();
+  obj->value->value = (t_generic_value) true;
+  obj->value->type = Function;
+  return obj;
 }
 
 void init_core() {
+
+  t_object* (*fn)(t_list* args) = &z_fn;
+  struct function* fn_ref = newFunction(fn,"+",2);
+  addFunctionToSymbolTable(clib_functions, fn_ref);
 
   t_object* (*add)(t_list* args) = &z_add;
   struct function* add_ref = newFunction(add,"+",2);
@@ -358,6 +373,22 @@ void init_core() {
   t_object* (*gt)(t_list* args) = &z_gt;
   struct function* gt_ref = newFunction(gt,">",2);
   addFunctionToSymbolTable(clib_functions, gt_ref);
+
+  t_object* (*lteq)(t_list* args) = &z_lteq;
+  struct function* lteq_ref = newFunction(lteq,"<=",2);
+  addFunctionToSymbolTable(clib_functions, lteq_ref);
+
+  t_object* (*gteq)(t_list* args) = &z_gteq;
+  struct function* gteq_ref = newFunction(gteq,">=",2);
+  addFunctionToSymbolTable(clib_functions, gteq_ref);
+
+  t_object* (*_exit)(t_list* args) = &z_exit;
+  struct function* exit_ref = newFunction(_exit,"exit",1);
+  addFunctionToSymbolTable(clib_functions, exit_ref);
+
+  t_object* (*print)(t_list* args) = &z_print;
+  struct function* print_ref = newFunction(print,"print",1);
+  addFunctionToSymbolTable(clib_functions, print_ref);
 
   t_object* (*println)(t_list* args) = &z_println;
   struct function* println_ref = newFunction(println,"println",1);

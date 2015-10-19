@@ -41,7 +41,14 @@ typedef struct {
 } t_object;
 
 struct function {
+  // store if the function is C code or zapper code
+  bool native;
+  // if it's C code, the function pointer is stored here
   t_object* (*pointer)(t_list* args);
+  // if it's zapper code, the body and arguments are stored here
+  t_list* body;
+  t_list* args;
+  // both C and zapper code use these
   char* name;
   int params;
 };

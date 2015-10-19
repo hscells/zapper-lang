@@ -43,10 +43,11 @@ int main(int argc, char const *argv[]) {
     t_object* value = eval(expressions);
     free(expressions);
     free(value);
+    free(clib_functions);
   } else {
+    free(clib_functions);
     exception("No input file was specified.",0 ,NULL);
   }
-  free(clib_functions);
   return 0;
 }
 
