@@ -68,6 +68,7 @@ object_t* z_div(list_t* args) {
 object_t* z_print(list_t* args) {
   object_t* obj = newObject();
   object_t* o = z_first(args);
+  struct atom *atom;
   if(o == NULL) {
     printf("undefined");
     return obj;
@@ -91,7 +92,16 @@ object_t* z_print(list_t* args) {
       printf("%d", o->value->value.b);
       return obj;
     case List:
-      printf("<List Object>");
+      atom = o->value->value.l->head;
+      printf("( ");
+      while (atom != NULL) {
+        object_t *l = z_list();
+        z_conj(l->value->value.l, atom->value);
+        z_print(l->value->value.l);
+        printf(" ");
+        atom = atom->next;
+      }
+      printf(")");
       return obj;
     case Exception:
       printf("<Exception Object>");
@@ -362,7 +372,37 @@ object_t* z_cond_placeholder(list_t* args) {
 }
 
 object_t* z_import(list_t* args) {
+  struct atom *atom= args->head;
+  while (atom != NULL) {
+    char *buffer = 0;
+    long length;
+    FILE *f;
+    char name[255];
+    strcpy(name, "zlib/");
+    strcat(name, atom->value->value->value.s);
+    strcat(name, ".zap");
+    f = fopen(name, "rb");
 
+
+    if (f) {
+      fseek(f, 0, SEEK_END);
+      length = ftell(f);
+      fseek(f, 0, SEEK_SET);
+      buffer = malloc(length);
+      if (buffer) {
+        fread(buffer, 1, length, f);
+      }
+      fclose(f);
+    }
+
+    if (buffer) {
+      object_t* expressions = parse(buffer);
+      eval(expressions->value->value.l, globals);
+    } else {
+      exception("Could not import package", -1, atom->value->value->value.s);
+    }
+    atom = atom->next;
+  }
   return newObject();
 }
 
@@ -379,6 +419,10 @@ void init_core() {
   object_t* (*_return)(list_t* args) = &z_return;
   struct function* return_ref = newFunction(_return,"return",1);
   addFunctionToSymbolTable(clib_functions, return_ref);
+
+  object_t* (*import)(list_t* args) = &z_import;
+  struct function* import_ref = newFunction(import,"import",-1);
+  addFunctionToSymbolTable(clib_functions, import_ref);
 
   object_t* (*cond)(list_t* args) = &z_cond_placeholder;
   struct function* cond_ref = newFunction(cond,"cond",0);

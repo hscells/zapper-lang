@@ -220,6 +220,23 @@ object_t* cond(list_t* conditions, symboltable_t* context) {
         } else {
           exception("predicates in cond must return a bool",-1,NULL);
         }
+      } else if (z_nth(cond->value->value->value.l, 0)->value->type == Symbol && z_nth(cond->value->value->value.l, 1)->value->type == List) {
+        char* symbol = z_nth(cond->value->value->value.l, 0)->value->value.s;
+        object_t *result;
+        if (inSymboltable(globals, symbol)) {
+          result = getSymbolByName(globals, symbol);
+        } else if (inSymboltable(context, symbol)) {
+          result = getSymbolByName(context, symbol);
+        } else {
+          result = z_nth(cond->value->value->value.l, 0);
+        }
+        if (result->value->type == Bool){
+          if (result->value->value.b) {
+            return eval(z_nth(cond->value->value->value.l, 1)->value->value.l, context);
+          }
+        } else {
+          exception("predicates in cond must return a bool",-1,NULL);
+        }
       } else{
         exception("cond requires ((predicate) (expression)) forms",-1,NULL);
       }
@@ -236,22 +253,15 @@ object_t* call(struct function* function, list_t* args, symboltable_t* context) 
   struct atom* currentAtom = args->head;
 
   // function definitions require a little trickery and for their parameters to not be evaluated
-  if (strcmp(function->name, "fn") == 0) {
-    if (z_length(args)->value->value.i == function->params) {
-      return (*function->pointer)(args);
-    } else {
-      exception("Parameter count mismatch.", -1, function->name);
-      return NULL;
-    }
-  } else if (strcmp(function->name, "let") == 0) {
-    if (z_length(args)->value->value.i == function->params) {
+  if (strcmp(function->name, "fn") == 0 || strcmp(function->name, "let") == 0 || strcmp(function->name, "import") == 0 || strcmp(function->name, "list") == 0) {
+    if (z_length(args)->value->value.i == function->params || function->params == -1) {
       return (*function->pointer)(args);
     } else {
       exception("Parameter count mismatch.", -1, function->name);
       return NULL;
     }
   } else if (strcmp(function->name, "cond") == 0) {
-      return cond(args, context);
+    return cond(args, context);
   } else { // zapper and C functions get evaluated the same
     while (currentAtom != NULL) {
       // recursively evaluate and substitite the parameters
