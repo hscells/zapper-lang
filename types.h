@@ -59,6 +59,7 @@ struct atom {
 };
 
 struct function* newFunction(t_object* (*pointer)(), char* name, int params);
+struct function* newZFunction(char* name, t_list* args, t_list* body, int params);
 t_symbol* newSymbol(int pointer, char* name);
 
 #endif

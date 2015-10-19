@@ -43,7 +43,6 @@ void addFunctionToSymbolTable(t_symboltable* s, struct function* func) {
   row->object->value->type = Function;
   row->object->value->value.function = func;
   row->id = row->object->id;
-
   row->next = NULL;
   if (s->head == NULL) {
     s->head = row;
@@ -63,11 +62,11 @@ struct function* getFunctionFromSymbolTable(t_symboltable* s, char* name) {
     }
     r = r->next;
   }
-  exception("Object has no value",-1,name);
+  exception("Function not in this symboltable",-1,name);
   return NULL;
 }
 
-void addObjectToSymbolTable(t_symboltable* s, t_object* symbol, t_object* object, struct node *node) {
+void addObjectToSymbolTable(t_symboltable* s, t_object* symbol, t_object* object) {
   struct t_symboltable_row* row = (struct t_symboltable_row*) malloc(sizeof(struct t_symboltable_row));
   row->name = symbol->value->value.s;
   if (object != NULL) {
@@ -105,20 +104,21 @@ void printSymboltable(t_symboltable* s) {
   }
 }
 
-t_object* getSymbolByName(t_symboltable* s, t_object* o) {
+t_object* getSymbolByName(t_symboltable* s, char* name) {
   struct t_symboltable_row* r = s->head;
   while (r != NULL) {
-    if (strcmp(r->name, o->value->value.s) == 0) {
+    if (strcmp(r->name, name) == 0) {
       return r->object;
     }
     r = r->next;
   }
-  exception("Object has no value",-1,o->value->value.s);
+  exception("Object has no value",-1,name);
   return NULL;
 }
 
 void init_system() {
   clib_functions = newSymbolTable();
+  globals = newSymbolTable();
   init_core();
   init_lists();
   init_seq();

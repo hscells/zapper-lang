@@ -25,6 +25,7 @@ typedef struct {
 } t_symboltable;
 
 t_symboltable *clib_functions;
+t_symboltable *globals;
 
 t_generic* newGeneric();
 
@@ -66,14 +67,13 @@ void init_seq();
 
 t_symboltable* newSymbolTable();
 void addFunctionToSymbolTable(t_symboltable* symboltable, struct function* func);
+void addObjectToSymbolTable(t_symboltable* s, t_object* symbol, t_object* object);
 struct function* getFunctionFromSymbolTable(t_symboltable* symboltable, char* name);
-void addObjectToSymbolTable(t_symboltable* symboltable, t_object* symbol, t_object* object, struct node *node);
 void printSymboltable(t_symboltable* symboltable);
 bool inSymboltable(t_symboltable* s, char* name);
 
-t_object* getSymbolByName(t_symboltable* symboltable, t_object* o);
+t_object* getSymbolByName(t_symboltable* symboltable, char* name);
 t_list* getFunctionParams(t_symboltable* symboltable, t_object* o);
 
-// eval is defined here because it relis on the symboltable object
-// t_object* eval(t_ast *ast, t_symboltable* symboltable, int depth, struct node* node);
+t_object* eval(t_list* ast, t_symboltable* context);
 #endif

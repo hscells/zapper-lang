@@ -36,8 +36,9 @@ int main(int argc, char const *argv[]) {
 
   if (buffer) {
     init_system();
+    t_symboltable* context = newSymbolTable();
     t_list* expressions = parse(buffer)->value->value.l;
-    t_object* value = eval(expressions);
+    t_object* value = eval(expressions, context);
     free(expressions);
     free(value);
     if (clib_functions->head != clib_functions->tail) {

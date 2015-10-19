@@ -22,3 +22,11 @@ t_object* newObject() {
   obj->value = newGeneric();
   return obj;
 }
+
+t_object* newList(t_list* list) {
+  t_object *obj = (t_object*) malloc(sizeof(t_object));
+  obj->id = newObjectId();
+  obj->value->value = (t_generic_value) list;
+  obj->value->type = List;
+  return obj;
+}

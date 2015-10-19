@@ -2,7 +2,7 @@
 #define __EXPRESSIONS_H
 
 #include <stdlib.h>
-#include "types.h"
+#include "system.h"
 #include "objects.h"
 
 typedef struct {
@@ -68,5 +68,4 @@ struct node {
 
 // union token initTokens();
 t_object* parse(char* e);
-t_object* eval(t_list* ast);
 #endif

@@ -5,5 +5,6 @@
 
 int newObjectId();
 t_object* newObject();
+t_object* newList();
 
 #endif

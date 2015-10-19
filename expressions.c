@@ -3,8 +3,6 @@
 #include <strings.h>
 #include <stdbool.h>
 #include "expressions.h"
-#include "system.h"
-#include "types.h"
 
 #define EOL '\n'
 
@@ -195,31 +193,62 @@ t_object* parse(char* e) {
   return root_node;
 }
 
-t_object* call(struct function* function, t_list* args) {
+t_object* call(struct function* function, t_list* args, t_symboltable* context) {
   t_list* newargs = z_list()->value->value.l;
   struct atom* currentAtom = args->head;
-  printf("old args: %d\n",z_length(args)->value->value.i);
-  while (currentAtom != NULL) {
-    if (currentAtom->value->value->type == List) {
-      printf("evaluating nested list... \n");
-      t_object* v = eval(currentAtom->value->value->value.l);
-      printf("result: %d\n", v->value->value.i);
-      z_conj(newargs, v);
+
+  // function definitions require a little trickery and for their parameters to not be evaluated
+  if (strcmp(function->name, "fn") == 0) {
+    if (z_length(args)->value->value.i == function->params) {
+      return (*function->pointer)(args);
     } else {
-      z_conj(newargs, currentAtom->value);
+      exception("Parameter count mismatch.", -1, function->name);
+      return NULL;
     }
-    currentAtom = currentAtom->next;
-  }
-  printf("new args: %d\n",z_length(newargs)->value->value.i);
-  if (z_length(newargs)->value->value.i == function->params) {
-    return (*function->pointer)(newargs);
+  // zapper and C functions get evaluated the same
   } else {
-    z_exception("Parameter count mismatch.");
-    return NULL;
+    while (currentAtom != NULL) {
+      // recursively evaluate and substitite the parameters
+      if (currentAtom->value->value->type == List) {
+        t_object* v = eval(currentAtom->value->value->value.l, context);
+        z_conj(newargs, v);
+      } else if (currentAtom->value->value->type == Symbol) {
+        printf("symbol name: %s\n", currentAtom->value->value->value.s);
+        if (inSymboltable(globals, currentAtom->value->value->value.s)) {
+          z_conj(newargs, getSymbolByName(globals, currentAtom->value->value->value.s));
+        } else if (inSymboltable(context, currentAtom->value->value->value.s)) {
+          z_conj(newargs, getSymbolByName(context, currentAtom->value->value->value.s));
+        } else {
+          exception("Symbol does not exist in local or global scope", -1, currentAtom->value->value->value.s);
+          return NULL;
+        }
+      } else {
+        z_conj(newargs, currentAtom->value);
+      }
+      currentAtom = currentAtom->next;
+    }
+    // if the parameter count matches
+    if (z_length(newargs)->value->value.i == function->params) {
+      // determine if the function is a C function or a zapper function and execute it
+      if (function->native) {
+        return (*function->pointer)(newargs);
+      } else {
+        printf("evaluating a zapper function\n");
+        t_symboltable* new_context = newSymbolTable();
+        t_list* func_ast = function->body;
+        for (int i = 0; i < function->params; i++){
+            addObjectToSymbolTable(new_context, z_nth(function->args, i), z_nth(newargs, i));
+        }
+        return eval(func_ast, new_context);
+      }
+    } else {
+      exception("Parameter count mismatch.", -1, function->name);
+      return NULL;
+    }
   }
 }
 
-t_object* eval(t_list* ast) {
+t_object* eval(t_list* ast, t_symboltable* context) {
   struct atom* currentAtom = ast->head;
   t_object* value = newObject();
   while (currentAtom != NULL) {
@@ -228,15 +257,19 @@ t_object* eval(t_list* ast) {
 
     if (currentAtom->value->value->type == Symbol && currentAtom == ast->head) { // is the symbol at the start of the list a builtin C function?
       if (inSymboltable(clib_functions, currentAtom->value->value->value.s)) {
-        printf("evaluating the expression\n");
         struct function* temp_func = getFunctionFromSymbolTable(clib_functions, currentAtom->value->value->value.s);
-        return call(temp_func, z_rest(ast)->value->value.l);
+        return call(temp_func, z_rest(ast)->value->value.l, context);
+      } else if (inSymboltable(globals, currentAtom->value->value->value.s)) {
+        struct function* temp_func = getFunctionFromSymbolTable(globals, currentAtom->value->value->value.s);
+        return call(temp_func, z_rest(ast)->value->value.l, context);
+      } else {
+        exception("Function does not exist in the local or global scope.", -1, currentAtom->value->value->value.s);
       }
     }
 
     else if (currentAtom->value->value->type == List) { // is the symbol a nested list?
       printf("evaluating nested expression...\n");
-      value = eval(currentAtom->value->value->value.l);
+      value = eval(currentAtom->value->value->value.l, context);
     }
 
     currentAtom = currentAtom->next;

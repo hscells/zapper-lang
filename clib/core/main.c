@@ -334,8 +334,13 @@ t_object* z_exit(t_list* args) {
 }
 
 t_object* z_fn(t_list* args) {
+  char* name = z_nth(args, 0)->value->value.s;
+  t_list* _args = z_nth(args, 1)->value->value.l;
+  t_list* body = z_nth(args, 2)->value->value.l;
+  int params = z_length(_args)->value->value.i;
   t_object* obj = newObject();
-  obj->value->value = (t_generic_value) true;
+  obj->value->value = (t_generic_value) newZFunction(name, _args, body, params);
+  addFunctionToSymbolTable(globals, obj->value->value.function);
   obj->value->type = Function;
   return obj;
 }
@@ -343,7 +348,7 @@ t_object* z_fn(t_list* args) {
 void init_core() {
 
   t_object* (*fn)(t_list* args) = &z_fn;
-  struct function* fn_ref = newFunction(fn,"fn",2);
+  struct function* fn_ref = newFunction(fn,"fn",3);
   addFunctionToSymbolTable(clib_functions, fn_ref);
 
   t_object* (*add)(t_list* args) = &z_add;

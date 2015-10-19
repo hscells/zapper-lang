@@ -7,7 +7,7 @@ t_object* z_map(t_object* function, t_list* list) {
     t_list* eval_list = z_list()->value->value.l;
     z_conj(eval_list, function);
     z_conj(eval_list, item->value);
-    z_conj(new_list, eval(eval_list));
+    z_conj(new_list, eval(eval_list, globals));
     item = item->next;
   }
   return z_list_obj(list);
