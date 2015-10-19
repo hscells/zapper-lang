@@ -37,6 +37,9 @@ int main(int argc, char const *argv[]) {
       fclose(f);
     }
 
+  } else {
+    repl_init();
+    return 0;
   }
 
   if (buffer) {
@@ -58,13 +61,20 @@ int main(int argc, char const *argv[]) {
 void repl_init() {
   char input[INPUT_SIZE] = "";
   printf("%s", ">>> ");
+  init_system();
+  symboltable_t* context = newSymbolTable();
   while (EXIT_STATUS == 0 && fgets(input, INPUT_SIZE, stdin)) {
 
-    // symboltable_t* symboltable = newSymbolTable();
+    list_t* expressions = parse(input)->value->value.l;
+    object_t* value = eval(expressions, context);
+    object_t* o = z_list();
+    z_conj(o->value->value.l, value);
+    z_println(o->value->value.l);
+    free(expressions);
+    free(value);
 
     if (EXIT_STATUS == 0) {
       printf("%s", ">>> ");
     }
-    EXIT_STATUS = 1;
   }
 }
