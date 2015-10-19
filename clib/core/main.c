@@ -72,6 +72,7 @@ t_object* z_print(t_list* args) {
     printf("undefined");
     return obj;
   }
+  printf("type: %d\n", o->value->type);
 
   switch(o->value->type) {
     case Int:
@@ -87,6 +88,7 @@ t_object* z_print(t_list* args) {
       printf("%s",o->value->value.s);
       return obj;
     case Bool:
+      printf("%d", o->value->value.i);
       printf("%d", o->value->value.b);
       return obj;
     case List:
@@ -128,19 +130,19 @@ t_object* z_eq(t_list* args) {
   if(z_typeof(a) == z_typeof(b)) {
     switch(z_typeof(a)) {
       case Int:
-        result->value->value = (t_generic_value) (a->value->value.i == b->value->value.i);
+        result->value->value.b = (a->value->value.i == b->value->value.i);
         break;
       case Float:
-        result->value->value = (t_generic_value) (a->value->value.f == b->value->value.f);
+        result->value->value.b = (a->value->value.f == b->value->value.f);
         break;
       case Char:
-        result->value->value = (t_generic_value) (a->value->value.c == b->value->value.c);
+        result->value->value.b = (a->value->value.c == b->value->value.c);
         break;
       case String:
-        result->value->value = (t_generic_value) (a->value->value.s == b->value->value.s);
+        result->value->value.b = strcmp(a->value->value.s, b->value->value.s);
         break;
       case Bool:
-        result->value->value = (t_generic_value) (a->value->value.b == b->value->value.b);
+        result->value->value.b = (a->value->value.b == b->value->value.b);
         break;
       case List:
         exception("List comparison not yet implemented.",-1,NULL);
@@ -345,11 +347,38 @@ t_object* z_fn(t_list* args) {
   return obj;
 }
 
+t_object* z_let(t_list* args) {
+  t_object* symbol = z_nth(args, 0);
+  t_object* obj = z_nth(args, 1);
+  addObjectToSymbolTable(globals, symbol, obj);
+  return obj;
+}
+
+t_object* z_return(t_list* args) {
+  return z_nth(args, 0);
+}
+
+t_object* z_cond_placeholder(t_list* args) {
+  return newObject();
+}
+
 void init_core() {
 
   t_object* (*fn)(t_list* args) = &z_fn;
   struct function* fn_ref = newFunction(fn,"fn",3);
   addFunctionToSymbolTable(clib_functions, fn_ref);
+
+  t_object* (*let)(t_list* args) = &z_let;
+  struct function* let_ref = newFunction(let,"let",2);
+  addFunctionToSymbolTable(clib_functions, let_ref);
+
+  t_object* (*_return)(t_list* args) = &z_return;
+  struct function* return_ref = newFunction(_return,"cond",0);
+  addFunctionToSymbolTable(clib_functions, return_ref);
+
+  t_object* (*cond)(t_list* args) = &z_cond_placeholder;
+  struct function* cond_ref = newFunction(cond,"return",1);
+  addFunctionToSymbolTable(clib_functions, cond_ref);
 
   t_object* (*add)(t_list* args) = &z_add;
   struct function* add_ref = newFunction(add,"+",2);

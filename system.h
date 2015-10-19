@@ -76,4 +76,5 @@ t_object* getSymbolByName(t_symboltable* symboltable, char* name);
 t_list* getFunctionParams(t_symboltable* symboltable, t_object* o);
 
 t_object* eval(t_list* ast, t_symboltable* context);
+t_object* call(struct function* func, t_list* args, t_symboltable* context);
 #endif

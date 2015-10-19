@@ -7,7 +7,7 @@
 #define EOL '\n'
 
 #define NUMBERS "1234567890"
-#define CHARACTERS "!?-+*/_abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+#define CHARACTERS "!?-+*/_=<>abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 #define PRECISION "."
 
 int node_id = 0;
@@ -135,7 +135,7 @@ t_object* parse(char* e) {
     }
 
     else {
-      while (c != '(' && c != ')' && c != ' ' && c != '\t' && i < strlen(e)) {
+      while (c != '(' && c != ')' && c != ' ' && c != '\t' && c != '\n' && i < strlen(e)) {
         cToStr[0] = c;
         cToStr[1] = '\0';
         strcat(tok, cToStr);
@@ -144,7 +144,7 @@ t_object* parse(char* e) {
       c = e[--i];
       type = inferType(tok);
       if (type != Exception){
-        printf("this object is of type <%d>: %s\n", type, tok);
+        // printf("this object is of type <%d>: %s\n", type, tok);
         t_object* obj = newObject();
         char* copy;
         switch(type) {
@@ -188,9 +188,33 @@ t_object* parse(char* e) {
       }
     }
   }
-  printf("there are %d expression(s) in root s-expression\n", z_length(expressions)->value->value.i);
-  printast(expressions, -1);
+  // printf("there are %d expression(s) in root s-expression\n", z_length(expressions)->value->value.i);
+  // printast(expressions, -1);
   return root_node;
+}
+
+t_object* cond(t_list* conditions, t_symboltable* context) {
+  struct atom* cond = conditions->head;
+  while (cond != NULL) {
+    if (cond->value->value->type == List) {
+      if (z_nth(cond->value->value->value.l, 0)->value->type == List && z_nth(cond->value->value->value.l, 1)->value->type == List){
+        t_object* result = eval(z_nth(cond->value->value->value.l, 0)->value->value.l, context);
+        if (result->value->type == Bool){
+          if (result->value->value.b) {
+            return eval(z_nth(cond->value->value->value.l, 1)->value->value.l, context);
+          }
+        } else {
+          exception("predicates in cond must return a bool",-1,NULL);
+        }
+      } else{
+        exception("cond requires ((predicate) (expression)) forms",-1,NULL);
+      }
+    } else {
+      exception("cond requires a list to evaluate",-1,NULL);
+    }
+    cond = cond->next;
+  }
+  return NULL;
 }
 
 t_object* call(struct function* function, t_list* args, t_symboltable* context) {
@@ -205,15 +229,22 @@ t_object* call(struct function* function, t_list* args, t_symboltable* context) 
       exception("Parameter count mismatch.", -1, function->name);
       return NULL;
     }
-  // zapper and C functions get evaluated the same
-  } else {
+  } else if (strcmp(function->name, "let") == 0) {
+    if (z_length(args)->value->value.i == function->params) {
+      return (*function->pointer)(args);
+    } else {
+      exception("Parameter count mismatch.", -1, function->name);
+      return NULL;
+    }
+  } else if (strcmp(function->name, "cond") == 0) {
+      return cond(args, context);
+  } else { // zapper and C functions get evaluated the same
     while (currentAtom != NULL) {
       // recursively evaluate and substitite the parameters
       if (currentAtom->value->value->type == List) {
         t_object* v = eval(currentAtom->value->value->value.l, context);
         z_conj(newargs, v);
       } else if (currentAtom->value->value->type == Symbol) {
-        printf("symbol name: %s\n", currentAtom->value->value->value.s);
         if (inSymboltable(globals, currentAtom->value->value->value.s)) {
           z_conj(newargs, getSymbolByName(globals, currentAtom->value->value->value.s));
         } else if (inSymboltable(context, currentAtom->value->value->value.s)) {
@@ -233,7 +264,6 @@ t_object* call(struct function* function, t_list* args, t_symboltable* context) 
       if (function->native) {
         return (*function->pointer)(newargs);
       } else {
-        printf("evaluating a zapper function\n");
         t_symboltable* new_context = newSymbolTable();
         t_list* func_ast = function->body;
         for (int i = 0; i < function->params; i++){
@@ -253,8 +283,6 @@ t_object* eval(t_list* ast, t_symboltable* context) {
   t_object* value = newObject();
   while (currentAtom != NULL) {
 
-    printf("The type of the current node: %d \n", currentAtom->value->value->type);
-
     if (currentAtom->value->value->type == Symbol && currentAtom == ast->head) { // is the symbol at the start of the list a builtin C function?
       if (inSymboltable(clib_functions, currentAtom->value->value->value.s)) {
         struct function* temp_func = getFunctionFromSymbolTable(clib_functions, currentAtom->value->value->value.s);
@@ -268,7 +296,6 @@ t_object* eval(t_list* ast, t_symboltable* context) {
     }
 
     else if (currentAtom->value->value->type == List) { // is the symbol a nested list?
-      printf("evaluating nested expression...\n");
       value = eval(currentAtom->value->value->value.l, context);
     }
 

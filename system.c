@@ -119,6 +119,7 @@ t_object* getSymbolByName(t_symboltable* s, char* name) {
 void init_system() {
   clib_functions = newSymbolTable();
   globals = newSymbolTable();
+
   init_core();
   init_lists();
   init_seq();
