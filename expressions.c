@@ -278,6 +278,8 @@ object_t* call(struct function* function, list_t* args, symboltable_t* context) 
           z_conj(newargs, getSymbolByName(globals, currentAtom->value->value->value.s));
         } else if (inSymboltable(context, currentAtom->value->value->value.s)) {
           z_conj(newargs, getSymbolByName(context, currentAtom->value->value->value.s));
+        } else if (inSymboltable(clib_functions, currentAtom->value->value->value.s)) {
+          z_conj(newargs, getSymbolByName(clib_functions, currentAtom->value->value->value.s));
         } else {
           exception("Symbol does not exist in local or global scope", -1, currentAtom->value->value->value.s);
           return NULL;
