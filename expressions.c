@@ -27,6 +27,9 @@ enum t_type inferType(char* token) {
 
   c = token;
   start_char = token[0];
+  if (start_char == '@') {
+    return FunctionReference;
+  }
   while (*c) {
     if (strchr(NUMBERS, *c)){
       contains_number = true;
@@ -186,15 +189,12 @@ object_t* parse(char* e) {
             obj->value->value.s = copy;
             z_conj(currenlist_t, obj);
             break;
-          case Function:
-           break;
-          case List:
-            break;
-          case String:
-            break;
-          case Bool:
-            break;
-          case Exception:
+          case FunctionReference:
+            copy = malloc(strlen(tok) + 1);
+            strcpy(copy, tok);
+            obj->value->type = FunctionReference;
+            obj->value->value.s = copy;
+            z_conj(currenlist_t, obj);
             break;
           default:
             exception("Could not determine the type of this object", line_count, tok);
@@ -253,7 +253,12 @@ object_t* call(struct function* function, list_t* args, symboltable_t* context) 
   struct atom* currentAtom = args->head;
 
   // function definitions require a little trickery and for their parameters to not be evaluated
-  if (strcmp(function->name, "fn") == 0 || strcmp(function->name, "let") == 0 || strcmp(function->name, "import") == 0 || strcmp(function->name, "list") == 0) {
+  if (strcmp(function->name, "fn") == 0
+   || strcmp(function->name, "lambda") == 0
+   || strcmp(function->name, "apply") == 0
+   || strcmp(function->name, "import") == 0
+   || strcmp(function->name, "let") == 0
+   || strcmp(function->name, "list") == 0) {
     if (z_length(args)->value->value.i == function->params || function->params == -1) {
       return (*function->pointer)(args);
     } else {
@@ -320,6 +325,12 @@ object_t* eval(list_t* ast, symboltable_t* context) {
       } else {
         exception("Function does not exist in the local or global scope.", -1, currentAtom->value->value->value.s);
       }
+    }
+
+    else if (currentAtom->value->value->type == FunctionReference && currentAtom == ast->head) { // is the symbol a nested list?
+      value = eval(currentAtom->value->value->value.l, context);
+      struct function* temp_func = getFunctionFromSymbolTable(clib_functions, currentAtom->value->value->value.s);
+      return call(temp_func, z_rest(ast)->value->value.l, context);
     }
 
     else if (currentAtom->value->value->type == List) { // is the symbol a nested list?

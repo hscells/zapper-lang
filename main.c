@@ -15,7 +15,8 @@ int main(int argc, char const *argv[]) {
 
   ZLIB_PATH = getenv("ZLIB_PATH");
   if (ZLIB_PATH == NULL) {
-    // printf("$ZLIB_PATH is not set. Using cwd for libraries and imports");
+    printf("$ZLIB_PATH is not set. Using cwd for libraries and imports\n");
+    ZLIB_PATH = "zlib/";
   }
 
   // these next lines are used to read a file in for evaluation

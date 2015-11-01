@@ -6,4 +6,8 @@
 (fn pow (n exponent)
   (cond
     ((<= exponent 1) (return n))
-    (True (* n (pow n (dec exponent)))))
+    (True (* n (pow n (dec exponent))))))
+
+(fn square (n) (pow n n))
+
+(fn sum (n) (+ n 0))

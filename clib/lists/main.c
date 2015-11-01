@@ -17,7 +17,15 @@ object_t* z_list() {
 
 object_t* zz_list(list_t *args) {
   object_t* list = z_list();
-  list->value->value.l = args;
+  // list->value->value.l = args;
+  list->value->value.l->head = args->head;
+  list->value->value.l->tail = args->head;
+  struct atom* temp = args->head;
+  while(temp != NULL) {
+    list->value->value.l->tail = temp;
+    list->value->value.l->tail->next = temp->next;
+    temp = temp->next;
+  }
   return list;
 }
 
@@ -40,6 +48,7 @@ object_t* z_list_obj(list_t* list) {
 object_t* z_conj(list_t* list, object_t* o) {
   struct atom* atom = (struct atom*) malloc(sizeof(struct atom));
   atom->value = o;
+  atom->next = NULL;
   if (list->head == NULL) {
     list->head = atom;
     list->tail = atom;
@@ -108,7 +117,7 @@ object_t* z_nth(list_t* list, int index) {
 //z_nth is used so prolifically in the internals, something needs to go on top of it
 object_t* zz_nth(list_t* list) {
   list_t* l = z_nth(list, 0)->value->value.l;
-  int index = z_nth(list, 0)->value->value.i;
+  int index = z_nth(list, 1)->value->value.i;
   return z_nth(l, index);
 }
 
@@ -151,7 +160,6 @@ void inilist_ts() {
   object_t* (*conj)(list_t* args) = &zz_conj;
   struct function* conj_ref = newFunction(conj,"conj",2);
   addFunctionToSymbolTable(clib_functions, conj_ref);
-  addFunctionToSymbolTable(clib_functions, rest_ref);
 
   object_t* (*list)(list_t* args) = &zz_list;
   struct function* list_ref = newFunction(list,"list",-1);

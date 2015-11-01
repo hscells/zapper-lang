@@ -88,8 +88,11 @@ object_t* z_print(list_t* args) {
       printf("%s",o->value->value.s);
       return obj;
     case Bool:
-      printf("%d", o->value->value.i);
-      printf("%d", o->value->value.b);
+      if(o->value->value.b) {
+        printf("True");
+      } else {
+        printf("False");
+      }
       return obj;
     case List:
       atom = o->value->value.l->head;
@@ -109,7 +112,11 @@ object_t* z_print(list_t* args) {
     case Function:
       printf("<Function Object>");
       return obj;
+    case FunctionReference:
+      printf("%s",o->value->value.s);
+      return obj;
     case Symbol:
+      printf("%s", o->value->value.s);
       // z_print(getSymbolByName(s, o),s);
       return obj;
   }
@@ -165,6 +172,9 @@ object_t* z_eq(list_t* args) {
       case Symbol:
         exception("Symbol comparison not yet implemented.",-1,NULL);
         break;
+      case FunctionReference:
+        exception("Function Reference comparison not yet implemented.",-1,NULL);
+        break;
     }
   } else {
     exception("Type mismatch", -1, NULL);
@@ -205,6 +215,9 @@ object_t* z_lt(list_t* args) {
         break;
       case Symbol:
         exception("Symbol comparison not yet implemented.",-1,NULL);
+        break;
+      case FunctionReference:
+        exception("Function Reference comparison not yet implemented.",-1,NULL);
         break;
     }
   } else {
@@ -247,6 +260,9 @@ object_t* z_gt(list_t* args) {
       case Symbol:
         exception("Symbol comparison not yet implemented.",-1,NULL);
         break;
+      case FunctionReference:
+        exception("Function Reference comparison not yet implemented.",-1,NULL);
+        break;
     }
   } else {
     exception("Type mismatch", -1, NULL);
@@ -287,6 +303,9 @@ object_t* z_lteq(list_t* args) {
         break;
       case Symbol:
         exception("Symbol comparison not yet implemented.",-1,NULL);
+        break;
+      case FunctionReference:
+        exception("Function Reference comparison not yet implemented.",-1,NULL);
         break;
     }
   } else {
@@ -329,6 +348,9 @@ object_t* z_gteq(list_t* args){
       case Symbol:
         exception("Symbol comparison not yet implemented.",-1,NULL);
         break;
+      case FunctionReference:
+        exception("Function Reference comparison not yet implemented.",-1,NULL);
+        break;
     }
   } else {
     exception("Type mismatch", -1, NULL);
@@ -359,6 +381,19 @@ object_t* z_fn(list_t* args) {
 object_t* z_let(list_t* args) {
   object_t* symbol = z_nth(args, 0);
   object_t* obj = z_nth(args, 1);
+  if (obj->value->type == List) {
+    obj = eval(z_nth(args, 1)->value->value.l, NULL);
+  }
+  addObjectToSymbolTable(globals, symbol, obj);
+  return obj;
+}
+
+object_t* z_apply(list_t* args) {
+  object_t* symbol = z_nth(args, 0);
+  object_t* obj = z_nth(args, 1);
+  if (obj->value->type == List) {
+    obj = eval(z_nth(args, 1)->value->value.l, NULL);
+  }
   addObjectToSymbolTable(globals, symbol, obj);
   return obj;
 }
@@ -378,11 +413,10 @@ object_t* z_import(list_t* args) {
     long length;
     FILE *f;
     char name[255];
-    strcpy(name, "zlib/");
+    strcpy(name, ZLIB_PATH);
     strcat(name, atom->value->value->value.s);
     strcat(name, ".zap");
     f = fopen(name, "rb");
-
 
     if (f) {
       fseek(f, 0, SEEK_END);
@@ -399,7 +433,7 @@ object_t* z_import(list_t* args) {
       object_t* expressions = parse(buffer);
       eval(expressions->value->value.l, globals);
     } else {
-      exception("Could not import package", -1, atom->value->value->value.s);
+      exception("Could not import package", -1, name);
     }
     atom = atom->next;
   }

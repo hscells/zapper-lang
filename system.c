@@ -141,5 +141,5 @@ void init_system() {
 
   init_core();
   inilist_ts();
-  init_seq();
+  // init_seq();
 }
