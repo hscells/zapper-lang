@@ -14,3 +14,9 @@
 (fn square (n) (pow n n))
 
 (fn sum (n) (+ n 0))
+
+(fn even? (n)
+  (= 0 (mod n 2)))
+
+(fn odd? (n)
+  (not (even? n)))
