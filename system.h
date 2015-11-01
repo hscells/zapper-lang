@@ -72,7 +72,7 @@ void init_seq();
 symboltable_t* newSymbolTable();
 void addFunctionToSymbolTable(symboltable_t* symboltable, struct function* func);
 void addObjectToSymbolTable(symboltable_t* s, object_t* symbol, object_t* object);
-struct function* getFunctionFromSymbolTable(symboltable_t* symboltable, char* name);
+struct function* getFunctionFromSymbolTable(symboltable_t* symboltable, char* name, int actual_parameter_count);
 void printSymboltable(symboltable_t* symboltable);
 bool inSymboltable(symboltable_t* s, char* name);
 

@@ -463,7 +463,7 @@ void init_core() {
   addFunctionToSymbolTable(clib_functions, import_ref);
 
   object_t* (*cond)(list_t* args) = &z_cond_placeholder;
-  struct function* cond_ref = newFunction(cond,"cond",0);
+  struct function* cond_ref = newFunction(cond,"cond",-1);
   addFunctionToSymbolTable(clib_functions, cond_ref);
 
   object_t* (*add)(list_t* args) = &z_add;

@@ -54,10 +54,10 @@ void addFunctionToSymbolTable(symboltable_t* s, struct function* func) {
 
 }
 
-struct function* getFunctionFromSymbolTable(symboltable_t* s, char* name) {
+struct function* getFunctionFromSymbolTable(symboltable_t* s, char* name, int actual_parameter_count) {
   struct symboltable_row_t* r = s->head;
   while (r != NULL) {
-    if (strcmp(r->name, name) == 0) {
+    if (strcmp(r->name, name) == 0 && (r->object->value->value.function->params == -1 || r->object->value->value.function->params == actual_parameter_count)) {
       return r->object->value->value.function;
     }
     r = r->next;

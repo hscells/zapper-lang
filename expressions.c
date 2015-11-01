@@ -254,8 +254,6 @@ object_t* call(struct function* function, list_t* args, symboltable_t* context) 
 
   // function definitions require a little trickery and for their parameters to not be evaluated
   if (strcmp(function->name, "fn") == 0
-   || strcmp(function->name, "lambda") == 0
-   || strcmp(function->name, "apply") == 0
    || strcmp(function->name, "import") == 0
    || strcmp(function->name, "let") == 0
    || strcmp(function->name, "list") == 0) {
@@ -310,19 +308,21 @@ object_t* call(struct function* function, list_t* args, symboltable_t* context) 
 }
 
 object_t* eval(list_t* ast, symboltable_t* context) {
+  int param_count;
   struct atom* currentAtom = ast->head;
   object_t* value = newObject();
   while (currentAtom != NULL) {
 
     if (currentAtom->value->value->type == Symbol && currentAtom == ast->head) { // is the symbol at the start of the list a function?
+      param_count = z_length(z_rest(ast)->value->value.l)->value->value.i;
       if (inSymboltable(clib_functions, currentAtom->value->value->value.s)) {
-        struct function* temp_func = getFunctionFromSymbolTable(clib_functions, currentAtom->value->value->value.s);
+        struct function* temp_func = getFunctionFromSymbolTable(clib_functions, currentAtom->value->value->value.s, param_count);
         return call(temp_func, z_rest(ast)->value->value.l, context);
       } else if (inSymboltable(globals, currentAtom->value->value->value.s)) {
-        struct function* temp_func = getFunctionFromSymbolTable(globals, currentAtom->value->value->value.s);
+        struct function* temp_func = getFunctionFromSymbolTable(globals, currentAtom->value->value->value.s, param_count);
         return call(temp_func, z_rest(ast)->value->value.l, context);
       } else if (inSymboltable(context, currentAtom->value->value->value.s)) {
-        struct function* temp_func = getFunctionFromSymbolTable(context, currentAtom->value->value->value.s);
+        struct function* temp_func = getFunctionFromSymbolTable(context, currentAtom->value->value->value.s, param_count);
         return call(temp_func, z_rest(ast)->value->value.l, context);
       } else {
         exception("Function does not exist in the local or global scope.", -1, currentAtom->value->value->value.s);
@@ -330,8 +330,9 @@ object_t* eval(list_t* ast, symboltable_t* context) {
     }
 
     else if (currentAtom->value->value->type == FunctionReference && currentAtom == ast->head) { // is the symbol a nested list?
+      param_count = z_length(z_rest(ast)->value->value.l)->value->value.i;
       value = eval(currentAtom->value->value->value.l, context);
-      struct function* temp_func = getFunctionFromSymbolTable(clib_functions, currentAtom->value->value->value.s);
+      struct function* temp_func = getFunctionFromSymbolTable(clib_functions, currentAtom->value->value->value.s, param_count);
       return call(temp_func, z_rest(ast)->value->value.l, context);
     }
 
