@@ -406,6 +406,10 @@ object_t* z_return(list_t* args) {
   return z_nth(args, 0);
 }
 
+object_t* z_eval(list_t* args) {
+  return eval(args, newSymbolTable());
+}
+
 object_t* z_cond_placeholder(list_t* args) {
   return newObject();
 }
@@ -449,6 +453,10 @@ void init_core() {
   object_t* (*fn)(list_t* args) = &z_fn;
   struct function* fn_ref = newFunction(fn,"fn",3);
   addFunctionToSymbolTable(clib_functions, fn_ref);
+
+  object_t* (*eval)(list_t* args) = &z_eval;
+  struct function* eval_ref = newFunction(eval,"eval",1);
+  addFunctionToSymbolTable(clib_functions, eval_ref);
 
   object_t* (*let)(list_t* args) = &z_let;
   struct function* let_ref = newFunction(let,"let",2);
