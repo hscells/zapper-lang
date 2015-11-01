@@ -22,4 +22,4 @@ At the moment the following things still need to be implemented
 
 ```zapper``` by itself will invoke the Zapper REPL.
 
-```zapepr file.zap``` will attempt to run file.zap
+```zapper file.zap``` will attempt to run file.zap
