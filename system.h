@@ -10,8 +10,9 @@
 
 int LINE_NUMBER;
 char* CURRENT_TOKEN;
+int CRASH_ON_EXCEPTION;
 
-char* ZLIB_PATH;
+char* ZAPPER_LIB_PATH;
 
 struct symboltable_row_t {
   object_t* object;

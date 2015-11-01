@@ -8,15 +8,16 @@
 #define INPUT_SIZE 512
 
 int EXIT_STATUS = 0;
+int CRASH_ON_EXCEPTION = 1;
 
 void repl_init();
 
 int main(int argc, char const *argv[]) {
 
-  ZLIB_PATH = getenv("ZLIB_PATH");
-  if (ZLIB_PATH == NULL) {
+  ZAPPER_LIB_PATH = getenv("ZLIB_PATH");
+  if (ZAPPER_LIB_PATH == NULL) {
     printf("$ZLIB_PATH is not set. Using cwd for libraries and imports\n");
-    ZLIB_PATH = "zlib/";
+    ZAPPER_LIB_PATH = "zlib/";
   }
 
   // these next lines are used to read a file in for evaluation
@@ -39,6 +40,7 @@ int main(int argc, char const *argv[]) {
     }
 
   } else {
+    CRASH_ON_EXCEPTION = 0;
     repl_init();
     return 0;
   }

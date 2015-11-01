@@ -4,12 +4,16 @@
 
 void exception(char* e, int line_number, char* token) {
   printf("An Exception was raised on line: %d, near: '%s'\n\t%s\n", line_number, token, e);
-  exit(2);
+  if (CRASH_ON_EXCEPTION) {
+    exit(2);
+  }
 }
 
 void z_exception(char* e) {
   printf("An Exception was raised on line: %d, near: '%s'\n\t%s\n", LINE_NUMBER, CURRENT_TOKEN, e);
-  exit(2);
+  if (CRASH_ON_EXCEPTION) {
+    exit(2);
+  }
 }
 
 
@@ -413,7 +417,7 @@ object_t* z_import(list_t* args) {
     long length;
     FILE *f;
     char name[255];
-    strcpy(name, ZLIB_PATH);
+    strcpy(name, ZAPPER_LIB_PATH);
     strcat(name, atom->value->value->value.s);
     strcat(name, ".zap");
     f = fopen(name, "rb");
