@@ -313,7 +313,13 @@ object_t* eval(list_t* ast, symboltable_t* context) {
   object_t* value = newObject();
   while (currentAtom != NULL) {
 
-    if (currentAtom->value->value->type == Symbol && currentAtom == ast->head) { // is the symbol at the start of the list a function?
+    // call function if there is a literal function object
+    if (currentAtom->value->value->type == Function && currentAtom == ast->head) {
+      return call(currentAtom->value->value->value.function, z_rest(ast)->value->value.l, context);
+    }
+
+    // call function if there is a symbol representing a function
+    else if (currentAtom->value->value->type == Symbol && currentAtom == ast->head) { // is the symbol at the start of the list a function?
       param_count = z_length(z_rest(ast)->value->value.l)->value->value.i;
       if (inSymboltable(clib_functions, currentAtom->value->value->value.s)) {
         struct function* temp_func = getFunctionFromSymbolTable(clib_functions, currentAtom->value->value->value.s, param_count);
@@ -329,6 +335,7 @@ object_t* eval(list_t* ast, symboltable_t* context) {
       }
     }
 
+    // call a function over a nested list of arguments
     else if (currentAtom->value->value->type == FunctionReference && currentAtom == ast->head) { // is the symbol a nested list?
       param_count = z_length(z_rest(ast)->value->value.l)->value->value.i;
       value = eval(currentAtom->value->value->value.l, context);
@@ -336,6 +343,7 @@ object_t* eval(list_t* ast, symboltable_t* context) {
       return call(temp_func, z_rest(ast)->value->value.l, context);
     }
 
+    // if the list is a nested list, evaluate down
     else if (currentAtom->value->value->type == List) { // is the symbol a nested list?
       value = eval(currentAtom->value->value->value.l, context);
     }
