@@ -1,21 +1,25 @@
 # zapper-lang
-Zapper is an experimental programming language, mainly for me to learn about programming theory.
+Zapper is an experimental programming language, mainly for me to learn about programming theory. It is a LISP written partly in C and itself.
 
-Zapper aims to be purely functional as possible. Not only does Zapper aim to be functional, but also take the good parts of object
-orientation such as encapsulation, polymorphism and inheritance. Down the line, due to both of these quirks, I hope
-for programs written in Zapper to be very easy to parallelize. Zapper is written in C, and module support is hopefully
-going to both come from not only a large libaray of modules written in the mother language, but extended with C. High
-interoperability is key with this language and modules should be able to be written fairly effortlessly. Zapper is
-an interpreted language for simplicity, but also because LISP languages should be written with the idea of 'code as data'.
+At it's heart Zapper aims to be a general purpose language, but also tries to stay functional by not allowing for mutable objects and provides interfaces for functional-style programming.
 
-At the moment, there is a basic structure for the language, and there are examples of
-how I want it to look in the ```examples/``` folder. At the moment the following things still need to be implemented
+At the moment, there is a basic structure for the language, and there are examples of actual code in the ```examples/``` folder. If you would like to try it out, it can currently be built on Mac and Linux (untested) systems, as well as possibly Windows (also untested) by running the ```make``` command. Binaries built for Mac are available on [the releases list](https://github.com/hscells/zapper-lang/releases).
+
+If you use the Atom editor, there is a syntax highlighter available [here](https://github.com/hscells/language-zapper).
+
+At the moment the following things still need to be implemented
 (in order of what I think is important):
 
- - Parser & Tokeniser
- - Objects & Classes (The core is there)
- - Module Support
- - REPL
- - VM
+ - ~~Parser & Tokeniser~~
+ - ~~Objects~~ & Classes
  - Core Language
+ - Package Support
+ - ~~REPL~~
+ - VM
  - Garbage Collection
+
+## Running Zapper
+
+```zapper``` by itself will invoke the Zapper REPL.
+
+```zapepr file.zap``` will attempt to run file.zap
