@@ -7,3 +7,9 @@
   (cond
     ((= b True) (return False))
     ((= b False) (return True))))
+
+(fn apply (f args) (apply f args (conj (list) f)))
+(fn apply (f args r)
+  (cond
+    ((empty? args) (eval r))
+    (True (apply f (rest args) (conj r (first args))))))
