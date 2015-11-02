@@ -78,7 +78,16 @@ object_t* z_first(list_t* list) {
 }
 
 object_t* zz_first(list_t* args) {
-  return z_first(z_nth(args, 0)->value->value.l);
+  if (z_typeof(z_first(args)) == String) {
+    char* s = z_first(args)->value->value.s;
+    char c = *s;
+    object_t* o = newObject();
+    o->value->value.c = c;
+    o->value->type = Char;
+    return o;
+  } else {
+    return z_first(z_nth(args, 0)->value->value.l);
+  }
 }
 
 
@@ -96,7 +105,16 @@ object_t* z_rest(list_t* list) {
 }
 
 object_t* zz_rest(list_t* args) {
-  return z_rest(z_nth(args, 0)->value->value.l);
+  if (z_typeof(z_first(args)) == String) {
+    char* s = z_first(args)->value->value.s;
+    char* new_s = ++s;
+    object_t* o = newObject();
+    o->value->value.s = new_s;
+    o->value->type = String;
+    return o;
+  } else {
+    return z_rest(z_nth(args, 0)->value->value.l);
+  }
 }
 
 object_t* z_nth(list_t* list, int index) {
@@ -116,9 +134,23 @@ object_t* z_nth(list_t* list, int index) {
 
 //z_nth is used so prolifically in the internals, something needs to go on top of it
 object_t* zz_nth(list_t* list) {
-  list_t* l = z_nth(list, 0)->value->value.l;
-  int index = z_nth(list, 1)->value->value.i;
-  return z_nth(l, index);
+  if (z_typeof(z_nth(list, 0)) == String) {
+    int index = z_nth(list, 1)->value->value.i;
+    char* s = z_first(list)->value->value.s;
+    char c;
+    for (int i = 0; i <= index; i++) {
+      c = *s;
+      ++s;
+    }
+    object_t* o = newObject();
+    o->value->value.c = c;
+    o->value->type = Char;
+    return o;
+  } else {
+    list_t* l = z_nth(list, 0)->value->value.l;
+    int index = z_nth(list, 1)->value->value.i;
+    return z_nth(l, index);
+  }
 }
 
 object_t* z_length(list_t* list) {
@@ -135,7 +167,15 @@ object_t* z_length(list_t* list) {
 }
 
 object_t* zz_length(list_t* args) {
-  return z_length(z_nth(args, 0)->value->value.l);
+  if (z_typeof(z_first(args)) == String) {
+    char* s = z_first(args)->value->value.s;
+    object_t* o = newObject();
+    o->value->value.i = strlen(s);
+    o->value->type = Int;
+    return o;
+  } else {
+    return z_length(z_nth(args, 0)->value->value.l);
+  }
 }
 
 
