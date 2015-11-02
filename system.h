@@ -69,7 +69,7 @@ object_t* z_string(char* x);
 void init_system();
 void init_core();
 void inilist_ts();
-void init_seq();
+void init_io();
 
 symboltable_t* newSymbolTable();
 void addFunctionToSymbolTable(symboltable_t* symboltable, struct function* func);
