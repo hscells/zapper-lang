@@ -24,6 +24,14 @@ object_t* z_add(list_t* args) {
   if(z_typeof(a) == z_typeof(b) && z_typeof(a) == Int) {
     result->value->value = (generic_value_t) (a->value->value.i + b->value->value.i);
     result->value->type = Int;
+  } else if (z_typeof(a) == z_typeof(b) && z_typeof(a) == String) {
+    char* str1 = a->value->value.s;
+    char* str2 = b->value->value.s;
+    char* newstr = (char*) malloc(1 + strlen(str1) + strlen(str2));
+    strcpy(newstr, str1);
+    strcat(newstr, str2);
+    result->value->value.s = newstr;
+    result->value->type = String;
   } else {
     exception("Type mismatch", -1, NULL);
   }
@@ -462,6 +470,10 @@ void init_core() {
   object_t* (*eval)(list_t* args) = &z_eval;
   struct function* eval_ref = newFunction(eval,"eval",1);
   addFunctionToSymbolTable(clib_functions, eval_ref);
+
+  object_t* (*ns)(list_t* args) = &z_ns;
+  struct function* ns_ref = newFunction(ns,"ns",1);
+  addFunctionToSymbolTable(clib_functions, ns_ref);
 
   object_t* (*let)(list_t* args) = &z_let;
   struct function* let_ref = newFunction(let,"let",2);
