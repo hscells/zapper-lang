@@ -11,12 +11,14 @@
 int LINE_NUMBER;
 char* CURRENT_TOKEN;
 int CRASH_ON_EXCEPTION;
+char* NAMESPACE;
 
 char* ZAPPER_LIB_PATH;
 
 struct symboltable_row_t {
   object_t* object;
   char* name;
+  char* fqn;
   int id;
   struct symboltable_row_t* next;
 };
@@ -75,6 +77,8 @@ void addObjectToSymbolTable(symboltable_t* s, object_t* symbol, object_t* object
 struct function* getFunctionFromSymbolTable(symboltable_t* symboltable, char* name, int actual_parameter_count);
 void printSymboltable(symboltable_t* symboltable);
 bool inSymboltable(symboltable_t* s, char* name);
+struct symboltable_row_t* symboltableRow(symboltable_t* s, char* name);
+int getFunctionParamCount(symboltable_t* s, char* name);
 
 object_t* getSymbolByName(symboltable_t* symboltable, char* name);
 list_t* getFunctionParams(symboltable_t* symboltable, object_t* o);

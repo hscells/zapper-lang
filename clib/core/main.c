@@ -410,6 +410,11 @@ object_t* z_eval(list_t* args) {
   return eval(args, newSymbolTable());
 }
 
+object_t* z_ns(list_t* args) {
+  NAMESPACE = z_first(args)->value->value.s;
+  return NULL; // eventually this shouldn't be NULL.
+}
+
 object_t* z_cond_placeholder(list_t* args) {
   return newObject();
 }

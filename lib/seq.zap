@@ -1,3 +1,5 @@
+(ns "zapper.seq")
+
 (fn map (f l)
   (map f l (list)))
 
@@ -5,7 +7,6 @@
   (cond
     ((empty? l) (return r))
     (True (map f (rest l) (conj r (f (first l)))))))
-
 
 (fn filter (p l)
   (filter p l (list)))

@@ -1,3 +1,5 @@
+(ns "zapper.math")
+
 (let PI 3.141519)
 
 (fn dec (n) (- n 1))

@@ -20,6 +20,8 @@ int main(int argc, char const *argv[]) {
     ZAPPER_LIB_PATH = "zlib/";
   }
 
+  NAMESPACE = "";
+
   // these next lines are used to read a file in for evaluation
   char *buffer = 0;
   long length;

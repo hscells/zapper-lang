@@ -37,21 +37,55 @@ symboltable_t* newSymbolTable() {
 
 void addFunctionToSymbolTable(symboltable_t* s, struct function* func) {
   struct symboltable_row_t* row = (struct symboltable_row_t*) malloc(sizeof(struct symboltable_row_t));
-  row->name = func->name;
-  row->object = newObject();
-
-  row->object->value->type = Function;
-  row->object->value->value.function = func;
-  row->id = row->object->id;
-  row->next = NULL;
-  if (s->head == NULL) {
-    s->head = row;
-    s->tail = row;
+  char* fqn = (char*) malloc(1 + strlen(NAMESPACE) + strlen(func->name) + strlen("."));
+  if (strcmp(NAMESPACE, "") != 0) {
+    strcpy(fqn, NAMESPACE);
+    strcat(fqn, ".");
+    strcat(fqn, func->name);
   } else {
-    s->tail->next = row;
-    s->tail = row;
+    fqn = func->name;
+  }
+  printf("%s\n", fqn);
+
+  if (inSymboltable(s, fqn) && getFunctionParamCount(s, fqn) == func->params) {
+    struct symboltable_row_t* r = symboltableRow(s, fqn);
+    r->fqn = fqn;
+    r->object->value->type = Function;
+    r->object->value->value.function = func;
+    r->object->value->value.function->namespace = NAMESPACE;
+  } else {
+    row->name = func->name;
+    row->fqn = fqn;
+    row->object = newObject();
+
+    row->object->value->type = Function;
+    row->object->value->value.function = func;
+    row->object->value->value.function->namespace = NAMESPACE;
+    row->id = row->object->id;
+    row->next = NULL;
+    if (s->head == NULL) {
+      s->head = row;
+      s->tail = row;
+    } else {
+      s->tail->next = row;
+      s->tail = row;
+    }
   }
 
+}
+
+int getFunctionParamCount(symboltable_t* s, char* name) {
+  struct symboltable_row_t* r = s->head;
+  while (r != NULL) {
+    if (strcmp(r->name, name) == 0) {
+      return r->object->value->value.function->params;
+    }
+    if (strcmp(r->fqn, name) == 0) {
+      return r->object->value->value.function->params;
+    }
+    r = r->next;
+  }
+  return -1;
 }
 
 struct function* getFunctionFromSymbolTable(symboltable_t* s, char* name, int actual_parameter_count) {
@@ -60,15 +94,19 @@ struct function* getFunctionFromSymbolTable(symboltable_t* s, char* name, int ac
     if (strcmp(r->name, name) == 0 && (r->object->value->value.function->params == -1 || r->object->value->value.function->params == actual_parameter_count)) {
       return r->object->value->value.function;
     }
+    else if (strcmp(r->fqn, name) == 0 && (r->object->value->value.function->params == -1 || r->object->value->value.function->params == actual_parameter_count)) {
+      return r->object->value->value.function;
+    }
     r = r->next;
   }
-  exception("Function not in this symboltable",-1,name);
+  exception("Function does not exist in any available scope", -1, name);
   return NULL;
 }
 
 void addObjectToSymbolTable(symboltable_t* s, object_t* symbol, object_t* object) {
   struct symboltable_row_t* row = (struct symboltable_row_t*) malloc(sizeof(struct symboltable_row_t));
   row->name = symbol->value->value.s;
+  row->fqn = symbol->value->value.s;
   if (object != NULL) {
     row->object = object;
     row->id = object->id;
@@ -84,10 +122,27 @@ void addObjectToSymbolTable(symboltable_t* s, object_t* symbol, object_t* object
   }
 }
 
+struct symboltable_row_t* symboltableRow(symboltable_t* s, char* name) {
+  struct symboltable_row_t* r = s->head;
+  while(r != NULL) {
+    if (strcmp(r->name, name) == 0) {
+      return r;
+    }
+    else if (strcmp(r->fqn, name) == 0) {
+      return r;
+    }
+    r = r->next;
+  }
+  return NULL;
+}
+
 bool inSymboltable(symboltable_t* s, char* name) {
   struct symboltable_row_t* r = s->head;
   while(r != NULL) {
     if (strcmp(r->name, name) == 0) {
+      return true;
+    }
+    else if (strcmp(r->fqn, name) == 0) {
       return true;
     }
     r = r->next;

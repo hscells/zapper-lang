@@ -45,6 +45,7 @@ struct function {
   // both C and zapper code use these
   char* name;
   int params;
+  char* namespace;
 };
 
 struct atom {
