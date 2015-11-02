@@ -45,7 +45,6 @@ void addFunctionToSymbolTable(symboltable_t* s, struct function* func) {
   } else {
     fqn = func->name;
   }
-  printf("%s\n", fqn);
 
   if (inSymboltable(s, fqn) && getFunctionParamCount(s, fqn) == func->params) {
     struct symboltable_row_t* r = symboltableRow(s, fqn);

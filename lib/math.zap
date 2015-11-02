@@ -22,3 +22,6 @@
 
 (fn odd? (n)
   (not (even? n)))
+
+(fn zero? (n)
+  (= 0 n))

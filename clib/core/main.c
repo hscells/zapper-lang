@@ -32,6 +32,30 @@ object_t* z_add(list_t* args) {
     strcat(newstr, str2);
     result->value->value.s = newstr;
     result->value->type = String;
+  } else if (z_typeof(a) == z_typeof(b) && z_typeof(a) == Char) {
+    char c1 = a->value->value.c;
+    char c2 = b->value->value.c;
+    char* newstr = (char*) malloc(1 + sizeof(char)*2);
+    strncpy(newstr, &c1, 1);
+    strncat(newstr, &c2, 1);
+    result->value->value.s = newstr;
+    result->value->type = String;
+  } else if (z_typeof(a) == String && z_typeof(b) == Char) {
+    char* str = a->value->value.s;
+    char c = b->value->value.c;
+    char* newstr = (char*) malloc(1 + sizeof(char) + strlen(str));
+    strncpy(newstr, str, strlen(str));
+    strncat(newstr, &c, 1);
+    result->value->value.s = newstr;
+    result->value->type = String;
+  } else if (z_typeof(b) == String && z_typeof(a) == Char) {
+    char* str = b->value->value.s;
+    char c = a->value->value.c;
+    char* newstr = (char*) malloc(1 + sizeof(char) + strlen(str));
+    strncpy(newstr, &c, 1);
+    strncat(newstr, str, strlen(str));
+    result->value->value.s = newstr;
+    result->value->type = String;
   } else {
     exception("Type mismatch", -1, NULL);
   }

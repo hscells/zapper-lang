@@ -44,9 +44,9 @@ enum t_type inferType(char* token) {
     c++;
   }
 
-  if (contains_char && strlen(token) > 1 && start_char == '"' && end_char == '"') {
+  if ((contains_char || contains_number || contains_precision) && strlen(token) > 1 && start_char == '"' && end_char == '"') {
     return String;
-  } else if (contains_char && strlen(token) == 1 && start_char == '\'' && end_char == '\'') {
+  } else if ((contains_char || contains_number || contains_precision) && start_char == '\'' && end_char == '\'') {
     return Char;
   } else if (contains_number && !contains_precision && !contains_char) {
     return Int;
@@ -171,7 +171,7 @@ object_t* parse(char* e) {
             z_conj(currenlist_t, obj);
             break;
           case Char:
-            obj->value->value = (generic_value_t) tok[0];
+            obj->value->value.c = tok[1];
             obj->value->type = Char;
             z_conj(currenlist_t, obj);
             break;
