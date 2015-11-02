@@ -24,3 +24,26 @@
   (cond
     ((empty? l) (return r))
     (True (reduce f (rest l) (f r (first l))))))
+
+(fn reverse (lst)
+  (reverse lst (length lst) (list)))
+(fn reverse (lst count r) (
+  (cond
+    ((zero? count) (return r))
+    (True (reverse lst (dec count) (conj r (nth lst (dec count))))))))
+
+(fn range (stop)
+  (range stop 0 (list)))
+(fn range (start stop)
+  (range stop start (list)))
+(fn range (stop c r)
+  (cond
+    ((zero? stop) (return r))
+    (True (range (dec stop) (inc c) (conj r c)))))
+
+(fn zip (la lb)
+  (zip la lb (list)))
+(fn zip (la lb r)
+  (cond
+    ((empty? la) (return r))
+    (True (zip (rest la) (rest lb) (conj r (conj (conj (list) (first la)) (first lb)))))))

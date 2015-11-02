@@ -1,3 +1,5 @@
+(import "seq")
+
 (ns "zapper.str")
 
 (fn concat (strings)
@@ -7,8 +9,4 @@
   (+ string " "))
 
 (fn reverse (string)
-  (reverse string (length string) (list)))
-(fn reverse (string count r) (
-  (cond
-    ((zero? count) (reduce + r))
-    (True (reverse string (dec count) (conj r (nth string (dec count))))))))
+  (reduce + (zapper.seq.reverse string)))

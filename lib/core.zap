@@ -15,3 +15,17 @@
   (cond
     ((empty? args) (eval r))
     (True (apply f (rest args) (conj r (first args))))))
+
+(fn true? (b)
+  (= b True))
+
+(fn or (a b)
+  (cond
+    ((true? a) (return True))
+    ((true? b) (return True))
+    (True (return False))))
+
+(fn and (a b)
+  (cond
+    ((= (true? a) (true? b)) (return True))
+    (True (return False))))
