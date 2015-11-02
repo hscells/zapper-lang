@@ -17,7 +17,7 @@ int main(int argc, char const *argv[]) {
   ZAPPER_LIB_PATH = getenv("ZLIB_PATH");
   if (ZAPPER_LIB_PATH == NULL) {
     printf("$ZLIB_PATH is not set. Using cwd for libraries and imports\n");
-    ZAPPER_LIB_PATH = "zlib/";
+    ZAPPER_LIB_PATH = "lib/";
   }
 
   NAMESPACE = "";
