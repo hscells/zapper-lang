@@ -321,13 +321,13 @@ object_t* eval(list_t* ast, symboltable_t* context) {
     // call function if there is a symbol representing a function
     else if (currentAtom->value->value->type == Symbol && currentAtom == ast->head) { // is the symbol at the start of the list a function?
       param_count = z_length(z_rest(ast)->value->value.l)->value->value.i;
-      if (inSymboltable(clib_functions, currentAtom->value->value->value.s) && getFunctionParamCount(clib_functions, currentAtom->value->value->value.s) == z_length(ast)->value->value.i - 1) {
+      if (inSymboltable(clib_functions, currentAtom->value->value->value.s) && (getFunctionParamCount(clib_functions, currentAtom->value->value->value.s) == -1 || getFunctionParamCount(clib_functions, currentAtom->value->value->value.s) == z_length(ast)->value->value.i - 1)) {
         struct function* temp_func = getFunctionFromSymbolTable(clib_functions, currentAtom->value->value->value.s, param_count);
         return call(temp_func, z_rest(ast)->value->value.l, context);
-      } else if (inSymboltable(globals, currentAtom->value->value->value.s) && getFunctionParamCount(globals, currentAtom->value->value->value.s) == z_length(ast)->value->value.i - 1) {
+      } else if (inSymboltable(globals, currentAtom->value->value->value.s) && (getFunctionParamCount(globals, currentAtom->value->value->value.s) == -1 || getFunctionParamCount(globals, currentAtom->value->value->value.s) == z_length(ast)->value->value.i - 1)) {
         struct function* temp_func = getFunctionFromSymbolTable(globals, currentAtom->value->value->value.s, param_count);
         return call(temp_func, z_rest(ast)->value->value.l, context);
-      } else if (inSymboltable(context, currentAtom->value->value->value.s) && getFunctionParamCount(context, currentAtom->value->value->value.s) == z_length(ast)->value->value.i - 1) {
+      } else if (inSymboltable(context, currentAtom->value->value->value.s) && (getFunctionParamCount(context, currentAtom->value->value->value.s) == -1 || getFunctionParamCount(context, currentAtom->value->value->value.s) == z_length(ast)->value->value.i - 1)) {
         struct function* temp_func = getFunctionFromSymbolTable(context, currentAtom->value->value->value.s, param_count);
         return call(temp_func, z_rest(ast)->value->value.l, context);
       } else {
