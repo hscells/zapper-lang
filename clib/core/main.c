@@ -146,7 +146,21 @@ object_t* z_print(list_t* args) {
       printf("<Exception Object>");
       return obj;
     case Function:
-      printf("<Function Object>");
+      if (o->value->value.function->body != NULL) {
+        printf("<Function Object>: ");
+        atom = o->value->value.function->body->head;
+        printf("( ");
+        while (atom != NULL) {
+          object_t *l = z_list();
+          z_conj(l->value->value.l, atom->value);
+          z_print(l->value->value.l);
+          printf(" ");
+          atom = atom->next;
+        }
+        printf(")");
+      } else {
+        printf("<Native Function Object>");
+      }
       return obj;
     case FunctionReference:
       printf("%s",o->value->value.s);
