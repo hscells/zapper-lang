@@ -2,29 +2,35 @@
 
 #include "../../system.h"
 
+struct atom* empty_head;
+
 /**
  * creates a new list
  * @return a new list
  */
 object_t* z_list() {
   list_t* list = (list_t*) malloc(sizeof(list_t));
-  list->head = NULL;
+  list->head = empty_head;
   object_t* list_obj = newObject();
   list_obj->value->type = List;
   list_obj->value->value.l = list;
   return list_obj;
 }
 
-object_t* zz_list(list_t *args) {
+object_t* zz_list(list_t* args) {
   object_t* list = z_list();
-  // list->value->value.l = args;
-  list->value->value.l->head = args->head;
-  list->value->value.l->tail = args->head;
-  struct atom* temp = args->head;
-  while(temp != NULL) {
-    list->value->value.l->tail = temp;
-    list->value->value.l->tail->next = temp->next;
-    temp = temp->next;
+  if (args->head == NULL) {
+    list->value->value.l->head = empty_head;
+    list->value->value.l->tail = list->value->value.l->head;
+  } else {
+    list->value->value.l->head = args->head;
+    list->value->value.l->tail = args->head;
+    struct atom* temp = args->head;
+    while(temp != NULL) {
+      list->value->value.l->tail = temp;
+      list->value->value.l->tail->next = temp->next;
+      temp = temp->next;
+    }
   }
   return list;
 }
@@ -49,7 +55,7 @@ object_t* z_conj(list_t* list, object_t* o) {
   struct atom* atom = (struct atom*) malloc(sizeof(struct atom));
   atom->value = o;
   atom->next = NULL;
-  if (list->head == NULL) {
+  if (list->head == empty_head) {
     list->head = atom;
     list->tail = atom;
   } else {
@@ -105,7 +111,13 @@ object_t* z_rest(list_t* list) {
 }
 
 object_t* zz_rest(list_t* args) {
-  if (z_typeof(z_first(args)) == String) {
+  if (args == NULL) {
+    return z_list();
+  }if (z_length(args)->value->value.i == 0) {
+    return z_list();
+  } else if (z_length(z_nth(args, 0)->value->value.l)->value->value.i == 0) {
+    return z_list();
+  } else if (z_typeof(z_first(args)) == String) {
     char* s = z_first(args)->value->value.s;
     char* new_s = ++s;
     object_t* o = newObject();
@@ -120,7 +132,7 @@ object_t* zz_rest(list_t* args) {
 object_t* z_nth(list_t* list, int index) {
   if (index > z_length(list)->value->value.i - 1 || index < 0) {
     z_exception("Index out of bounds.");
-    return NULL;
+    return z_list();
   }
   struct atom* a = list->head;
   for (int i = 0; i < z_length(list)->value->value.i; i++) {
@@ -129,7 +141,7 @@ object_t* z_nth(list_t* list, int index) {
     }
     a = a->next;
   }
-  return NULL;
+  return z_list();
 }
 
 //z_nth is used so prolifically in the internals, something needs to go on top of it
@@ -155,10 +167,14 @@ object_t* zz_nth(list_t* list) {
 
 object_t* z_length(list_t* list) {
   int length = 0;
-  struct atom* atom = list->head;
-  while(atom != NULL) {
-    length++;
-    atom = atom->next;
+  if (list) {
+    if (list->head != empty_head) {
+      struct atom* atom = list->head;
+      while(atom != NULL) {
+        length++;
+        atom = atom->next;
+      }
+    }
   }
   object_t* len = newObject();
   len->value->type = Int;
@@ -181,6 +197,10 @@ object_t* zz_length(list_t* args) {
 
 
 void inilist_ts() {
+
+  empty_head = (struct atom*) malloc(sizeof(struct atom));
+  empty_head->next = NULL;
+
   object_t* (*length)(list_t* args) = &zz_length;
   struct function* length_ref = newFunction(length,"length",1);
   addFunctionToSymbolTable(clib_functions, length_ref);
