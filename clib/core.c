@@ -439,17 +439,17 @@ object_t* z_fn(list_t* args) {
   return obj;
 }
 
-object_t* z_let(list_t* args) {
-  object_t* symbol = z_nth(args, 0);
-  object_t* obj = z_nth(args, 1);
-  if (obj->value->type == List) {
-    obj = eval(z_nth(args, 1)->value->value.l, NULL);
-  }
-  addObjectToSymbolTable(globals, symbol, obj);
+object_t* z_lambda(list_t* args) {
+  list_t* _args = z_nth(args, 0)->value->value.l;
+  list_t* body = z_nth(args, 1)->value->value.l;
+  int params = z_length(_args)->value->value.i;
+  object_t* obj = newObject();
+  obj->value->value = (generic_value_t) newZFunction(NULL, _args, body, params);
+  obj->value->type = Function;
   return obj;
 }
 
-object_t* z_apply(list_t* args) {
+object_t* z_let(list_t* args) {
   object_t* symbol = z_nth(args, 0);
   object_t* obj = z_nth(args, 1);
   if (obj->value->type == List) {
@@ -515,6 +515,10 @@ void init_core() {
   object_t* (*fn)(list_t* args) = &z_fn;
   struct function* fn_ref = newFunction(fn,"fn",3);
   addFunctionToSymbolTable(clib_functions, fn_ref);
+
+  object_t* (*lambda)(list_t* args) = &z_lambda;
+  struct function* lambda_ref = newFunction(lambda,"lambda",2);
+  addFunctionToSymbolTable(clib_functions, lambda_ref);
 
   object_t* (*eval)(list_t* args) = &z_eval;
   struct function* eval_ref = newFunction(eval,"eval",1);
