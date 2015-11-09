@@ -82,11 +82,11 @@ object_t* parse(char* e) {
   char tok[255];
   char cToStr[2];
 
-  list_t* ast = malloc(sizeof(list_t*) * 256);
+  list_t* ast = malloc(sizeof(list_t*) * 512);
 
   list_t* expressions = z_list()->value->value.l;
   // list_t* parenlist_t = expressions;
-  list_t* currenlist_t = expressions;
+  list_t* currentlist = expressions;
   object_t* root_node = newObject();
   root_node->value->value = (generic_value_t) expressions;
   root_node->value->type = List;
@@ -129,7 +129,7 @@ object_t* parse(char* e) {
       strcpy(copy, tok);
       obj->value->type = String;
       obj->value->value.s = copy;
-      z_conj(currenlist_t, obj);
+      z_conj(currentlist, obj);
     } else if (c == '(') {
 
       // create a new object to store the nested expression
@@ -138,17 +138,17 @@ object_t* parse(char* e) {
       nested_expression->value->type = List;
 
       // join the new nested expression onto the parent expression
-      z_conj(currenlist_t, nested_expression);
+      z_conj(currentlist, nested_expression);
 
       // maintain a reference to the parent list
-      ast[++b_count] = *currenlist_t;
+      ast[++b_count] = *currentlist;
 
       // continue to parse the nested expression
-      currenlist_t = nested_expression->value->value.l;
+      currentlist = nested_expression->value->value.l;
     }
 
     else if (c == ')') {
-      currenlist_t = &ast[b_count--];
+      currentlist = &ast[b_count--];
     }
 
     else {
@@ -168,17 +168,17 @@ object_t* parse(char* e) {
           case Int:
             obj->value->value = (generic_value_t) atoi(tok);
             obj->value->type = Int;
-            z_conj(currenlist_t, obj);
+            z_conj(currentlist, obj);
             break;
           case Char:
             obj->value->value.c = tok[1];
             obj->value->type = Char;
-            z_conj(currenlist_t, obj);
+            z_conj(currentlist, obj);
             break;
           case Float:
             obj->value->value = (generic_value_t) atof(tok);
             obj->value->type = Char;
-            z_conj(currenlist_t, obj);
+            z_conj(currentlist, obj);
             break;
           // strings and symbols are a little more tricky, because of pointers
           // so we need to allocate space for the new char*
@@ -187,14 +187,14 @@ object_t* parse(char* e) {
             strcpy(copy, tok);
             obj->value->type = Symbol;
             obj->value->value.s = copy;
-            z_conj(currenlist_t, obj);
+            z_conj(currentlist, obj);
             break;
           case FunctionReference:
             copy = malloc(strlen(tok) + 1);
             strcpy(copy, tok);
             obj->value->type = FunctionReference;
             obj->value->value.s = copy;
-            z_conj(currenlist_t, obj);
+            z_conj(currentlist, obj);
             break;
           default:
             exception("Could not determine the type of this object", line_count, tok);
@@ -253,18 +253,18 @@ object_t* call(struct function* function, list_t* args, symboltable_t* context) 
   struct atom* currentAtom = args->head;
 
   // function definitions require a little trickery and for their parameters to not be evaluated
-  if (strcmp(function->name, "fn") == 0
+  if (function->name != NULL && (
+      strcmp(function->name, "fn") == 0
    || strcmp(function->name, "import") == 0
    || strcmp(function->name, "let") == 0
-   || strcmp(function->name, "list") == 0) {
+   || strcmp(function->name, "lambda") == 0
+   || strcmp(function->name, "list") == 0)) {
     if (z_length(args)->value->value.i == function->params || function->params == -1) {
       return (*function->pointer)(args);
     } else {
-      exception("Parameter count mismatch.", -1, function->name);
-      return NULL;
       return exception("Parameter count mismatch.", -1, function->name);
     }
-  } else if (strcmp(function->name, "cond") == 0) {
+  } else if (function->name != NULL && strcmp(function->name, "cond") == 0) {
     return cond(args, context);
   } else { // zapper and C functions get evaluated the same
     while (currentAtom != NULL) {
@@ -310,6 +310,8 @@ object_t* eval(list_t* ast, symboltable_t* context) {
   int param_count;
   struct atom* currentAtom = ast->head;
   object_t* value = newObject();
+  char* symbolname;
+  CURRENT_CONTEXT = context;
   while (currentAtom != NULL) {
 
     // call function if there is a literal function object
@@ -320,17 +322,27 @@ object_t* eval(list_t* ast, symboltable_t* context) {
     // call function if there is a symbol representing a function
     else if (currentAtom->value->value->type == Symbol && currentAtom == ast->head) { // is the symbol at the start of the list a function?
       param_count = z_length(z_rest(ast)->value->value.l)->value->value.i;
-      if (inSymboltable(clib_functions, currentAtom->value->value->value.s) && (getFunctionParamCount(clib_functions, currentAtom->value->value->value.s) == -1 || getFunctionParamCount(clib_functions, currentAtom->value->value->value.s) == z_length(ast)->value->value.i - 1)) {
-        struct function* temp_func = getFunctionFromSymbolTable(clib_functions, currentAtom->value->value->value.s, param_count);
+      symbolname = currentAtom->value->value->value.s;
+      if (funcInSymboltable(clib_functions, symbolname, param_count)) {
+        struct function* temp_func = getFunctionFromSymbolTable(clib_functions, symbolname, param_count);
         return call(temp_func, z_rest(ast)->value->value.l, context);
-      } else if (inSymboltable(globals, currentAtom->value->value->value.s) && (getFunctionParamCount(globals, currentAtom->value->value->value.s) == -1 || getFunctionParamCount(globals, currentAtom->value->value->value.s) == z_length(ast)->value->value.i - 1)) {
-        struct function* temp_func = getFunctionFromSymbolTable(globals, currentAtom->value->value->value.s, param_count);
+      } else if (funcInSymboltable(globals, symbolname, param_count)) {
+        struct function* temp_func = getFunctionFromSymbolTable(globals, symbolname, param_count);
         return call(temp_func, z_rest(ast)->value->value.l, context);
-      } else if (inSymboltable(context, currentAtom->value->value->value.s) && (getFunctionParamCount(context, currentAtom->value->value->value.s) == -1 || getFunctionParamCount(context, currentAtom->value->value->value.s) == z_length(ast)->value->value.i - 1)) {
-        struct function* temp_func = getFunctionFromSymbolTable(context, currentAtom->value->value->value.s, param_count);
+      } else if (funcInSymboltable(context, symbolname, param_count)) {
+        struct function* temp_func = getFunctionFromSymbolTable(context, symbolname, param_count);
         return call(temp_func, z_rest(ast)->value->value.l, context);
       } else {
-        return exception("Function does not exist in the local or global scope or the parameter count was incorrect.", -1, currentAtom->value->value->value.s);
+        if (inSymboltable(clib_functions, symbolname)) {
+          return getSymbolByName(clib_functions, symbolname);
+        } else if (inSymboltable(globals, symbolname)) {
+          return getSymbolByName(globals, symbolname);
+        } else if (inSymboltable(context, symbolname)) {
+          return getSymbolByName(context, symbolname);
+        } else {
+          return currentAtom->value;
+        }
+        return exception("Function does not exist in the local or global scope or the parameter count was incorrect.", -1, symbolname);
       }
     }
 

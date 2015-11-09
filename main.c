@@ -76,7 +76,6 @@ void repl_init() {
     z_conj(o->value->value.l, value);
     z_println(o->value->value.l);
     free(expressions);
-    free(value);
 
     if (EXIT_STATUS == 0) {
       printf("%s", ">>> ");

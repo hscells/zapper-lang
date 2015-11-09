@@ -149,6 +149,20 @@ bool inSymboltable(symboltable_t* s, char* name) {
   return false;
 }
 
+bool funcInSymboltable(symboltable_t* s, char* name, int actual_params) {
+  struct symboltable_row_t* r = s->head;
+  while(r != NULL) {
+    if (strcmp(r->name, name) == 0 && r->object->value->type == Function && (r->object->value->value.function->params == -1 || r->object->value->value.function->params == actual_params)) {
+      return true;
+    }
+    else if (strcmp(r->fqn, name) == 0 && r->object->value->type == Function && (r->object->value->value.function->params == -1 || r->object->value->value.function->params == actual_params)) {
+      return true;
+    }
+    r = r->next;
+  }
+  return false;
+}
+
 void printSymboltable(symboltable_t* s) {
   struct symboltable_row_t* r = s->head;
   printf("Current Symboltable:\n");
@@ -193,6 +207,6 @@ void init_system() {
   addObjectToSymbolTable(globals, z_False_symbol, z_False);
 
   init_core();
-  inilist_ts();
+  init_seq();
   init_io();
 }

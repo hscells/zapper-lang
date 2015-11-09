@@ -176,7 +176,6 @@ object_t* z_print(list_t* args) {
           atom = atom->next;
         }
         printf(") )");
-        printf("args: %d", z_length(o->value->value.function->args)->value->value.i);
       } else {
         printf("<Native Function Object>");
       }
@@ -186,7 +185,6 @@ object_t* z_print(list_t* args) {
       return obj;
     case Symbol:
       printf("%s", o->value->value.s);
-      // z_print(getSymbolByName(s, o),s);
       return obj;
   }
   printf("<object> @ %d", o->id);
@@ -459,9 +457,13 @@ object_t* z_lambda(list_t* args) {
 
 object_t* z_let(list_t* args) {
   object_t* symbol = z_nth(args, 0);
+  char* symbolname = symbol->value->value.s;
+  if (inSymboltable(clib_functions, symbolname) || inSymboltable(globals, symbolname) || inSymboltable(globals, symbolname)) {
+    return z_exception("Symbol already has a value and cannot be mutated.");
+  }
   object_t* obj = z_nth(args, 1);
   if (obj->value->type == List) {
-    obj = eval(z_nth(args, 1)->value->value.l, NULL);
+    obj = eval(z_nth(args, 1)->value->value.l, CURRENT_CONTEXT);
   }
   addObjectToSymbolTable(globals, symbol, obj);
   return obj;

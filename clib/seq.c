@@ -1,6 +1,6 @@
 #include <strings.h>
 
-#include "../../system.h"
+#include "../system.h"
 
 struct atom* empty_head;
 
@@ -194,34 +194,30 @@ object_t* zz_length(list_t* args) {
   }
 }
 
+object_t* (*length)(list_t* args) = &zz_length;
 
 
-void inilist_ts() {
+
+void init_seq() {
 
   empty_head = (struct atom*) malloc(sizeof(struct atom));
   empty_head->next = NULL;
 
   object_t* (*length)(list_t* args) = &zz_length;
-  struct function* length_ref = newFunction(length,"length",1);
-  addFunctionToSymbolTable(clib_functions, length_ref);
+  ADDFUNC(length,"length",1);
 
   object_t* (*nth)(list_t* args) = &zz_nth;
-  struct function* nth_ref = newFunction(nth,"nth",2);
-  addFunctionToSymbolTable(clib_functions, nth_ref);
+  ADDFUNC(nth,"nth",2);
 
   object_t* (*first)(list_t* args) = &zz_first;
-  struct function* first_ref = newFunction(first,"first",1);
-  addFunctionToSymbolTable(clib_functions, first_ref);
+  ADDFUNC(first,"first",1);
 
   object_t* (*rest)(list_t* args) = &zz_rest;
-  struct function* rest_ref = newFunction(rest,"rest",1);
-  addFunctionToSymbolTable(clib_functions, rest_ref);
+  ADDFUNC(rest,"rest",1);
 
   object_t* (*conj)(list_t* args) = &zz_conj;
-  struct function* conj_ref = newFunction(conj,"conj",2);
-  addFunctionToSymbolTable(clib_functions, conj_ref);
+  ADDFUNC(conj,"conj",2);
 
   object_t* (*list)(list_t* args) = &zz_list;
-  struct function* list_ref = newFunction(list,"list",-1);
-  addFunctionToSymbolTable(clib_functions, list_ref);
+  ADDFUNC(list,"list",-1);
 }

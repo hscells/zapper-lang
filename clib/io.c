@@ -1,4 +1,4 @@
-#include "../../system.h"
+#include "../system.h"
 
 object_t* z_slurp(list_t* args) {
   object_t* data = newObject();

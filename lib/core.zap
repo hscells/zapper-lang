@@ -29,3 +29,10 @@
   (cond
     ((= (true? a) (true? b)) (return True))
     (True (return False))))
+
+(fn if (pred result else)
+  (cond
+    ((pred) (result))
+    (True (else))))
+
+(fn quit () (exit 1))

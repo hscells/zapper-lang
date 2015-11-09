@@ -8,6 +8,8 @@
 #include "types.h"
 #include "expressions.h"
 
+#define ADDFUNC(x,y,z) addFunctionToSymbolTable(clib_functions, newFunction(x,y,z))
+
 int LINE_NUMBER;
 char* CURRENT_TOKEN;
 int CRASH_ON_EXCEPTION;
@@ -29,19 +31,20 @@ typedef struct {
   int current;
 } symboltable_t;
 
-symboltable_t *clib_functions;
-symboltable_t *globals;
-symboltable_t *imports;
+symboltable_t* clib_functions;
+symboltable_t* globals;
+symboltable_t* imports;
+symboltable_t* CURRENT_CONTEXT;
 
 generic_t* newGeneric();
 
 object_t* z_print(list_t* arg);
 object_t* z_println(list_t* arg);
 object_t* z_read();
+object_t* exception(char* e, int line_num, char* token);
+object_t* z_exception(char* e);
 
 enum t_type z_typeof(object_t* o);
-void exception(char* e, int line_num, char* token);
-void z_exception(char* e);
 
 object_t* z_add(list_t* args);
 object_t* z_sub(list_t* args);
@@ -68,7 +71,7 @@ object_t* z_string(char* x);
 
 void init_system();
 void init_core();
-void inilist_ts();
+void init_seq();
 void init_io();
 
 symboltable_t* newSymbolTable();
@@ -77,6 +80,7 @@ void addObjectToSymbolTable(symboltable_t* s, object_t* symbol, object_t* object
 struct function* getFunctionFromSymbolTable(symboltable_t* symboltable, char* name, int actual_parameter_count);
 void printSymboltable(symboltable_t* symboltable);
 bool inSymboltable(symboltable_t* s, char* name);
+bool funcInSymboltable(symboltable_t* s, char* name, int params);
 struct symboltable_row_t* symboltableRow(symboltable_t* s, char* name);
 int getFunctionParamCount(symboltable_t* s, char* name);
 
