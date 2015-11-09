@@ -166,8 +166,7 @@ object_t* getSymbolByName(symboltable_t* s, char* name) {
     }
     r = r->next;
   }
-  exception("Object has no value",-1,name);
-  return NULL;
+  return exception("Object has no value",-1,name);
 }
 
 void init_system() {

@@ -1,19 +1,27 @@
 #include <strings.h>
 
-#include "../../system.h"
+#include "../system.h"
 
-void exception(char* e, int line_number, char* token) {
+object_t* exception(char* e, int line_number, char* token) {
   printf("An Exception was raised on line: %d, near: '%s'\n\t%s\n", line_number, token, e);
   if (CRASH_ON_EXCEPTION) {
     exit(2);
   }
+  object_t* o = newObject();
+  o->value->value.s = token;
+  o->value->type = Exception;
+  return o;
 }
 
-void z_exception(char* e) {
+object_t* z_exception(char* e) {
   printf("An Exception was raised on line: %d, near: '%s'\n\t%s\n", LINE_NUMBER, CURRENT_TOKEN, e);
   if (CRASH_ON_EXCEPTION) {
     exit(2);
   }
+  object_t* o = newObject();
+  o->value->value.s = CURRENT_TOKEN;
+  o->value->type = Exception;
+  return o;
 }
 
 

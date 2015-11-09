@@ -235,17 +235,17 @@ object_t* cond(list_t* conditions, symboltable_t* context) {
             return eval(z_nth(cond->value->value->value.l, 1)->value->value.l, context);
           }
         } else {
-          exception("predicates in cond must return a bool",-1,NULL);
+          return exception("predicates in cond must return a bool",-1,NULL);
         }
       } else{
-        exception("cond requires ((predicate) (expression)) forms",-1,NULL);
+        return exception("cond requires ((predicate) (expression)) forms",-1,NULL);
       }
     } else {
-      exception("cond requires a list to evaluate",-1,NULL);
+      return exception("cond requires a list to evaluate",-1,NULL);
     }
     cond = cond->next;
   }
-  return NULL;
+  return exception("cond must evaluate to something",-1,NULL);
 }
 
 object_t* call(struct function* function, list_t* args, symboltable_t* context) {
@@ -262,6 +262,7 @@ object_t* call(struct function* function, list_t* args, symboltable_t* context) 
     } else {
       exception("Parameter count mismatch.", -1, function->name);
       return NULL;
+      return exception("Parameter count mismatch.", -1, function->name);
     }
   } else if (strcmp(function->name, "cond") == 0) {
     return cond(args, context);
@@ -279,8 +280,7 @@ object_t* call(struct function* function, list_t* args, symboltable_t* context) 
         } else if (inSymboltable(clib_functions, currentAtom->value->value->value.s)) {
           z_conj(newargs, getSymbolByName(clib_functions, currentAtom->value->value->value.s));
         } else {
-          exception("Symbol does not exist in local or global scope", -1, currentAtom->value->value->value.s);
-          return NULL;
+          return exception("Symbol does not exist in local or global scope", -1, currentAtom->value->value->value.s);
         }
       } else {
         z_conj(newargs, currentAtom->value);
@@ -301,8 +301,7 @@ object_t* call(struct function* function, list_t* args, symboltable_t* context) 
         return eval(func_ast, new_context);
       }
     } else {
-      exception("Parameter count mismatch.", -1, function->name);
-      return NULL;
+      return exception("Parameter count mismatch.", -1, function->name);
     }
   }
 }
@@ -331,8 +330,7 @@ object_t* eval(list_t* ast, symboltable_t* context) {
         struct function* temp_func = getFunctionFromSymbolTable(context, currentAtom->value->value->value.s, param_count);
         return call(temp_func, z_rest(ast)->value->value.l, context);
       } else {
-        exception("Function does not exist in the local or global scope or the parameter count was incorrect.", -1, currentAtom->value->value->value.s);
-        return newObject();
+        return exception("Function does not exist in the local or global scope or the parameter count was incorrect.", -1, currentAtom->value->value->value.s);
       }
     }
 
