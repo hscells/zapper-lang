@@ -166,7 +166,7 @@ object_t* parse(char* e) {
         char* copy;
         switch(type) {
           case Int:
-            obj->value->value = (generic_value_t) atoi(tok);
+            obj->value->value.i = atoi(tok);
             obj->value->type = Int;
             z_conj(currentlist, obj);
             break;
@@ -176,8 +176,8 @@ object_t* parse(char* e) {
             z_conj(currentlist, obj);
             break;
           case Float:
-            obj->value->value = (generic_value_t) atof(tok);
-            obj->value->type = Char;
+            obj->value->value.f = atof(tok);
+            obj->value->type = Float;
             z_conj(currentlist, obj);
             break;
           // strings and symbols are a little more tricky, because of pointers

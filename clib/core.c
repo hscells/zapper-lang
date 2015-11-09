@@ -32,6 +32,15 @@ object_t* z_add(list_t* args) {
   if(z_typeof(a) == z_typeof(b) && z_typeof(a) == Int) {
     result->value->value = (generic_value_t) (a->value->value.i + b->value->value.i);
     result->value->type = Int;
+  } else if(z_typeof(a) == z_typeof(b) && z_typeof(a) == Float) {
+    result->value->value = (generic_value_t) (a->value->value.f + b->value->value.f);
+    result->value->type = Float;
+  } else if(z_typeof(a) == Float && z_typeof(b) == Int) {
+    result->value->value = (generic_value_t) (a->value->value.f + b->value->value.i);
+    result->value->type = Float;
+  } else if(z_typeof(a) == Int && z_typeof(b) == Float) {
+    result->value->value = (generic_value_t) (a->value->value.i + b->value->value.f);
+    result->value->type = Float;
   } else if (z_typeof(a) == z_typeof(b) && z_typeof(a) == String) {
     char* str1 = a->value->value.s;
     char* str2 = b->value->value.s;
@@ -77,6 +86,15 @@ object_t* z_sub(list_t* args) {
   if(z_typeof(a) == z_typeof(b) && z_typeof(a) == Int) {
     result->value->value = (generic_value_t) (a->value->value.i - b->value->value.i);
     result->value->type = Int;
+  } else if(z_typeof(a) == z_typeof(b) && z_typeof(a) == Float) {
+    result->value->value = (generic_value_t) (a->value->value.f - b->value->value.f);
+    result->value->type = Float;
+  } else if(z_typeof(a) == Float && z_typeof(b) == Int) {
+    result->value->value = (generic_value_t) (a->value->value.f - b->value->value.i);
+    result->value->type = Float;
+  } else if(z_typeof(a) == Int && z_typeof(b) == Float) {
+    result->value->value = (generic_value_t) (a->value->value.i - b->value->value.f);
+    result->value->type = Float;
   } else {
     exception("Type mismatch", -1, NULL);
   }
@@ -90,6 +108,15 @@ object_t* z_mul(list_t* args) {
   if(z_typeof(a) == z_typeof(b) && z_typeof(a) == Int) {
     result->value->value = (generic_value_t) (a->value->value.i * b->value->value.i);
     result->value->type = Int;
+  } else if(z_typeof(a) == z_typeof(b) && z_typeof(a) == Float) {
+    result->value->value = (generic_value_t) (a->value->value.f * b->value->value.f);
+    result->value->type = Float;
+  } else if(z_typeof(a) == Float && z_typeof(b) == Int) {
+    result->value->value = (generic_value_t) (a->value->value.f * b->value->value.i);
+    result->value->type = Float;
+  } else if(z_typeof(a) == Int && z_typeof(b) == Float) {
+    result->value->value = (generic_value_t) (a->value->value.i * b->value->value.f);
+    result->value->type = Float;
   } else {
     exception("Type mismatch", -1, NULL);
   }
@@ -103,6 +130,15 @@ object_t* z_div(list_t* args) {
   if(z_typeof(a) == z_typeof(b) && z_typeof(a) == Int) {
     result->value->value = (generic_value_t) (a->value->value.i / b->value->value.i);
     result->value->type = Int;
+  } else if(z_typeof(a) == z_typeof(b) && z_typeof(a) == Float) {
+    result->value->value = (generic_value_t) (a->value->value.f / b->value->value.f);
+    result->value->type = Float;
+  } else if(z_typeof(a) == Float && z_typeof(b) == Int) {
+    result->value->value = (generic_value_t) (a->value->value.f / b->value->value.i);
+    result->value->type = Float;
+  } else if(z_typeof(a) == Int && z_typeof(b) == Float) {
+    result->value->value = (generic_value_t) (a->value->value.i / b->value->value.f);
+    result->value->type = Float;
   } else {
     exception("Type mismatch", -1, NULL);
   }
