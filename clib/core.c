@@ -127,6 +127,9 @@ object_t* z_div(list_t* args) {
   object_t* a = z_nth(args,0);
   object_t* b = z_nth(args,1);
   object_t* result = newObject();
+  if ((z_typeof(a) == Int && b->value->value.i == 0) || (z_typeof(a) == Float && b->value->value.f == 0)) {
+    return z_exception("Division by zero.");
+  }
   if(z_typeof(a) == z_typeof(b) && z_typeof(a) == Int) {
     result->value->value = (generic_value_t) (a->value->value.i / b->value->value.i);
     result->value->type = Int;
