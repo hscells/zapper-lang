@@ -2,26 +2,41 @@
 
 #include "../system.h"
 
-object_t* exception(char* e, int line_number, char* token) {
-  printf("An Exception was raised on line: %d, near: '%s'\n\t%s\n", line_number, token, e);
+object_t* exception(char* e, object_t* obj) {
+  int line_num;
+  if (obj->line_num == -1) {
+    line_num = -1;
+  } else {
+    line_num = obj->line_num;
+  }
+  printf("Namespace `%s`, line %d near ", NAMESPACE, line_num);
+  if (obj->value->type == Int) {
+    printf("%d", obj->value->value.i);
+  } else if (obj->value->type == Float) {
+    printf("%f", obj->value->value.f);
+  } else if (obj->value->type == Char) {
+    printf("%c", obj->value->value.c);
+  } else if (obj->value->type == String) {
+    printf("%s", obj->value->value.s);
+  } else if (obj->value->type == Symbol) {
+    printf("%s", obj->value->value.s);
+  } else if (obj->value->type == Function) {
+    printf("%s", obj->value->value.function->name);
+  } else if (obj->value->type == List) {
+    printf("list");
+  }
+  printf("\n\t%s\n",e);
   if (CRASH_ON_EXCEPTION) {
     exit(2);
   }
   object_t* o = newObject();
-  o->value->value.s = token;
+  o->value->value.s = e;
   o->value->type = Exception;
   return o;
 }
 
 object_t* z_exception(char* e) {
-  printf("An Exception was raised on line: %d, near: '%s'\n\t%s\n", LINE_NUMBER, CURRENT_TOKEN, e);
-  if (CRASH_ON_EXCEPTION) {
-    exit(2);
-  }
-  object_t* o = newObject();
-  o->value->value.s = CURRENT_TOKEN;
-  o->value->type = Exception;
-  return o;
+  return exception(e, CURRENT_OBJECT);
 }
 
 
@@ -74,7 +89,7 @@ object_t* z_add(list_t* args) {
     result->value->value.s = newstr;
     result->value->type = String;
   } else {
-    exception("Type mismatch", -1, NULL);
+    exception("Type mismatch", a);
   }
   return result;
 }
@@ -96,7 +111,7 @@ object_t* z_sub(list_t* args) {
     result->value->value = (generic_value_t) (a->value->value.i - b->value->value.f);
     result->value->type = Float;
   } else {
-    exception("Type mismatch", -1, NULL);
+    exception("Type mismatch", a);
   }
   return result;
 }
@@ -118,7 +133,7 @@ object_t* z_mul(list_t* args) {
     result->value->value = (generic_value_t) (a->value->value.i * b->value->value.f);
     result->value->type = Float;
   } else {
-    exception("Type mismatch", -1, NULL);
+    exception("Type mismatch", a);
   }
   return result;
 }
@@ -143,7 +158,7 @@ object_t* z_div(list_t* args) {
     result->value->value = (generic_value_t) (a->value->value.i / b->value->value.f);
     result->value->type = Float;
   } else {
-    exception("Type mismatch", -1, NULL);
+    exception("Type mismatch", a);
   }
   return result;
 }
@@ -267,23 +282,23 @@ object_t* z_eq(list_t* args) {
         result->value->value.b = (a->value->value.b == b->value->value.b);
         break;
       case List:
-        exception("List comparison not yet implemented.",-1,NULL);
+        exception("List comparison not yet implemented.", a);
         break;
       case Exception:
-        exception("Exception comparison not yet implemented.",-1,NULL);
+        exception("Exception comparison not yet implemented.", a);
         break;
       case Function:
-        exception("Function comparison not yet implemented.",-1,NULL);
+        exception("Function comparison not yet implemented.", a);
         break;
       case Symbol:
-        exception("Symbol comparison not yet implemented.",-1,NULL);
+        exception("Symbol comparison not yet implemented.", a);
         break;
       case FunctionReference:
-        exception("Function Reference comparison not yet implemented.",-1,NULL);
+        exception("Function Reference comparison not yet implemented.", a);
         break;
     }
   } else {
-    exception("Type mismatch", -1, NULL);
+    exception("Type mismatch", a);
   }
   return result;
 }
@@ -311,23 +326,23 @@ object_t* z_lt(list_t* args) {
         result->value->value = (generic_value_t) (a->value->value.b < b->value->value.b);
         break;
       case List:
-        exception("List comparison not yet implemented.",-1,NULL);
+        exception("List comparison not yet implemented.", a);
         break;
       case Exception:
-        exception("Exception comparison not yet implemented.",-1,NULL);
+        exception("Exception comparison not yet implemented.", a);
         break;
       case Function:
-        exception("Function comparison not yet implemented.",-1,NULL);
+        exception("Function comparison not yet implemented.", a);
         break;
       case Symbol:
-        exception("Symbol comparison not yet implemented.",-1,NULL);
+        exception("Symbol comparison not yet implemented.", a);
         break;
       case FunctionReference:
-        exception("Function Reference comparison not yet implemented.",-1,NULL);
+        exception("Function Reference comparison not yet implemented.", a);
         break;
     }
   } else {
-    exception("Type mismatch", -1, NULL);
+    exception("Type mismatch", a);
   }
   return result;
 }
@@ -355,23 +370,23 @@ object_t* z_gt(list_t* args) {
         result->value->value = (generic_value_t) (a->value->value.b > b->value->value.b);
         break;
       case List:
-        exception("List comparison not yet implemented.",-1,NULL);
+        exception("List comparison not yet implemented.", a);
         break;
       case Exception:
-        exception("Exception comparison not yet implemented.",-1,NULL);
+        exception("Exception comparison not yet implemented.", a);
         break;
       case Function:
-        exception("Function comparison not yet implemented.",-1,NULL);
+        exception("Function comparison not yet implemented.", a);
         break;
       case Symbol:
-        exception("Symbol comparison not yet implemented.",-1,NULL);
+        exception("Symbol comparison not yet implemented.", a);
         break;
       case FunctionReference:
-        exception("Function Reference comparison not yet implemented.",-1,NULL);
+        exception("Function Reference comparison not yet implemented.", a);
         break;
     }
   } else {
-    exception("Type mismatch", -1, NULL);
+    exception("Type mismatch", a);
   }
   return result;  return result;
 }
@@ -399,23 +414,23 @@ object_t* z_lteq(list_t* args) {
         result->value->value = (generic_value_t) (a->value->value.b <= b->value->value.b);
         break;
       case List:
-        exception("List comparison not yet implemented.",-1,NULL);
+        exception("List comparison not yet implemented.", a);
         break;
       case Exception:
-        exception("Exception comparison not yet implemented.",-1,NULL);
+        exception("Exception comparison not yet implemented.", a);
         break;
       case Function:
-        exception("Function comparison not yet implemented.",-1,NULL);
+        exception("Function comparison not yet implemented.", a);
         break;
       case Symbol:
-        exception("Symbol comparison not yet implemented.",-1,NULL);
+        exception("Symbol comparison not yet implemented.", a);
         break;
       case FunctionReference:
-        exception("Function Reference comparison not yet implemented.",-1,NULL);
+        exception("Function Reference comparison not yet implemented.", a);
         break;
     }
   } else {
-    exception("Type mismatch", -1, NULL);
+    exception("Type mismatch", a);
   }
   return result;
 }
@@ -443,23 +458,23 @@ object_t* z_gteq(list_t* args){
         result->value->value = (generic_value_t) (a->value->value.b >= b->value->value.b);
         break;
       case List:
-        exception("List comparison not yet implemented.",-1,NULL);
+        exception("List comparison not yet implemented.", a);
         break;
       case Exception:
-        exception("Exception comparison not yet implemented.",-1,NULL);
+        exception("Exception comparison not yet implemented.", a);
         break;
       case Function:
-        exception("Function comparison not yet implemented.",-1,NULL);
+        exception("Function comparison not yet implemented.", a);
         break;
       case Symbol:
-        exception("Symbol comparison not yet implemented.",-1,NULL);
+        exception("Symbol comparison not yet implemented.", a);
         break;
       case FunctionReference:
-        exception("Function Reference comparison not yet implemented.",-1,NULL);
+        exception("Function Reference comparison not yet implemented.", a);
         break;
     }
   } else {
-    exception("Type mismatch", -1, NULL);
+    exception("Type mismatch", a);
   }
   return result;
 }
@@ -552,10 +567,11 @@ object_t* z_import(list_t* args) {
       object_t* expressions = parse(buffer);
       eval(expressions->value->value.l, globals);
     } else {
-      exception("Could not import package", -1, name);
+      exception("Could not import package", atom->value);
     }
     atom = atom->next;
   }
+  NAMESPACE = "";
   return newObject();
 }
 

@@ -14,6 +14,7 @@ int LINE_NUMBER;
 char* CURRENT_TOKEN;
 int CRASH_ON_EXCEPTION;
 char* NAMESPACE;
+object_t* CURRENT_OBJECT;
 
 char* ZAPPER_LIB_PATH;
 
@@ -41,7 +42,7 @@ generic_t* newGeneric();
 object_t* z_print(list_t* arg);
 object_t* z_println(list_t* arg);
 object_t* z_read();
-object_t* exception(char* e, int line_num, char* token);
+object_t* exception(char* e, object_t* obj);
 object_t* z_exception(char* e);
 
 enum t_type z_typeof(object_t* o);

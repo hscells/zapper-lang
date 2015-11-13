@@ -58,7 +58,7 @@ int main(int argc, char const *argv[]) {
       collecsymboltable_t(clib_functions);
     }
   } else {
-    exception("No input file was specified.",0 ,NULL);
+    exception("No input file was specified.", newObject());
   }
   return 0;
 }

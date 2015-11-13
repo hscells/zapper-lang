@@ -20,6 +20,7 @@ object_t* newObject() {
   object_t *obj = (object_t*) malloc(sizeof(object_t));
   obj->id = newObjectId();
   obj->value = newGeneric();
+  obj->line_num = -1;
   return obj;
 }
 

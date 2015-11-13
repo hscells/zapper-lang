@@ -98,7 +98,7 @@ struct function* getFunctionFromSymbolTable(symboltable_t* s, char* name, int ac
     }
     r = r->next;
   }
-  exception("Function does not exist in any available scope", -1, name);
+  z_exception("Function does not exist in any available scope");
   return NULL;
 }
 
@@ -180,7 +180,7 @@ object_t* getSymbolByName(symboltable_t* s, char* name) {
     }
     r = r->next;
   }
-  return exception("Object has no value",-1,name);
+  return z_exception("Object has no value");
 }
 
 void init_system() {

@@ -24,7 +24,7 @@ object_t* z_slurp(list_t* args) {
     data->value->value.s = buffer;
     data->value->type = String;
   } else {
-    exception("Could not read file", -1, filename);
+    exception("Could not read file", z_first(args));
     data->value->type = Bool;
     data->value->value.b = false;
     return data;
@@ -53,7 +53,7 @@ object_t* z_spit(list_t* args) {
     fprintf(f, "%s\n", output);
     fclose(f);
   } else {
-    exception("Could not open file", -1, filename);
+    exception("Could not open file", z_first(args));
     data->value->value.b = false;
     return data;
   }

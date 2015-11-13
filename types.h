@@ -3,6 +3,7 @@
 
 #include <stdlib.h>
 #include <stdbool.h>
+#include <stdint.h>
 
 enum t_type { Int, Float, Char, String, Bool, List, Exception, Function, FunctionReference, Symbol};
 
@@ -31,6 +32,7 @@ typedef struct {
 
 typedef struct {
   generic_t* value;
+  int line_num;
   int id;
 } object_t;
 

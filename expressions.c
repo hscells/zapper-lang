@@ -163,6 +163,7 @@ object_t* parse(char* e) {
       if (type != Exception){
         // printf("this object is of type <%d>: %s\n", type, tok);
         object_t* obj = newObject();
+        obj->line_num = line_count + 1;
         char* copy;
         switch(type) {
           case Int:
@@ -197,7 +198,7 @@ object_t* parse(char* e) {
             z_conj(currentlist, obj);
             break;
           default:
-            exception("Could not determine the type of this object", line_count, tok);
+            exception("Could not determine the type of this object", obj);
         }
       }
     }
@@ -218,7 +219,7 @@ object_t* cond(list_t* conditions, symboltable_t* context) {
             return eval(z_nth(cond->value->value->value.l, 1)->value->value.l, context);
           }
         } else {
-          exception("predicates in cond must return a bool",-1,NULL);
+          exception("predicates in cond must return a bool", cond->value);
         }
       } else if (z_nth(cond->value->value->value.l, 0)->value->type == Symbol && z_nth(cond->value->value->value.l, 1)->value->type == List) {
         char* symbol = z_nth(cond->value->value->value.l, 0)->value->value.s;
@@ -235,17 +236,17 @@ object_t* cond(list_t* conditions, symboltable_t* context) {
             return eval(z_nth(cond->value->value->value.l, 1)->value->value.l, context);
           }
         } else {
-          return exception("predicates in cond must return a bool",-1,NULL);
+          return exception("predicates in cond must return a bool", cond->value);
         }
       } else{
-        return exception("cond requires ((predicate) (expression)) forms",-1,NULL);
+        return exception("cond requires ((predicate) (expression)) forms", cond->value);
       }
     } else {
-      return exception("cond requires a list to evaluate",-1,NULL);
+      return exception("cond requires a list to evaluate", cond->value);
     }
     cond = cond->next;
   }
-  return exception("cond must evaluate to something",-1,NULL);
+  return exception("cond must evaluate to something", cond->value);
 }
 
 object_t* call(struct function* function, list_t* args, symboltable_t* context) {
@@ -262,7 +263,7 @@ object_t* call(struct function* function, list_t* args, symboltable_t* context) 
     if (z_length(args)->value->value.i == function->params || function->params == -1) {
       return (*function->pointer)(args);
     } else {
-      return exception("Parameter count mismatch.", -1, function->name);
+      return exception("Parameter count mismatch.", z_length(args));
     }
   } else if (function->name != NULL && strcmp(function->name, "cond") == 0) {
     return cond(args, context);
@@ -280,7 +281,7 @@ object_t* call(struct function* function, list_t* args, symboltable_t* context) 
         } else if (inSymboltable(clib_functions, currentAtom->value->value->value.s)) {
           z_conj(newargs, getSymbolByName(clib_functions, currentAtom->value->value->value.s));
         } else {
-          return exception("Symbol does not exist in local or global scope", -1, currentAtom->value->value->value.s);
+          return exception("Symbol does not exist in local or global scope", currentAtom->value);
         }
       } else {
         z_conj(newargs, currentAtom->value);
@@ -301,7 +302,7 @@ object_t* call(struct function* function, list_t* args, symboltable_t* context) 
         return eval(func_ast, new_context);
       }
     } else {
-      return exception("Parameter count mismatch.", -1, function->name);
+      return exception("Parameter count mismatch.", z_length(args));
     }
   }
 }
@@ -313,7 +314,7 @@ object_t* eval(list_t* ast, symboltable_t* context) {
   char* symbolname;
   CURRENT_CONTEXT = context;
   while (currentAtom != NULL) {
-
+    CURRENT_OBJECT = currentAtom->value;
     // call function if there is a literal function object
     if (currentAtom->value->value->type == Function && currentAtom == ast->head) {
       return call(currentAtom->value->value->value.function, z_rest(ast)->value->value.l, context);
@@ -342,7 +343,7 @@ object_t* eval(list_t* ast, symboltable_t* context) {
         } else {
           return currentAtom->value;
         }
-        return exception("Function does not exist in the local or global scope or the parameter count was incorrect.", -1, symbolname);
+        return exception("Function does not exist in the local or global scope or the parameter count was incorrect.", currentAtom->value);
       }
     }
 
