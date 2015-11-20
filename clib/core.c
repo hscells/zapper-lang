@@ -508,7 +508,7 @@ object_t* z_return(list_t* args) {
 }
 
 object_t* z_eval(list_t* args) {
-  return eval(args, newSymbolTable());
+  return eval(args, CURRENT_CONTEXT);
 }
 
 object_t* z_ns(list_t* args) {
