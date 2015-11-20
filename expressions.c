@@ -360,6 +360,10 @@ object_t* eval(list_t* ast, symboltable_t* context) {
       value = eval(currentAtom->value->value->value.l, context);
     }
 
+    else {
+      return currentAtom->value;
+    }
+
     currentAtom = currentAtom->next;
   }
   free(currentAtom);
