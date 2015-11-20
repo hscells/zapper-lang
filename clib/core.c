@@ -209,27 +209,7 @@ object_t* z_print(list_t* args) {
       return obj;
     case Function:
       if (o->value->value.function->body != NULL) {
-        printf("<Function Object> ( %s ", o->value->value.function->name);
-        atom = o->value->value.function->args->head;
-        printf("( ");
-        while (atom != NULL) {
-          object_t *l = z_list();
-          z_conj(l->value->value.l, atom->value);
-          z_print(l->value->value.l);
-          printf(" ");
-          atom = atom->next;
-        }
-        printf(") ");
-        atom = o->value->value.function->body->head;
-        printf("( ");
-        while (atom != NULL) {
-          object_t *l = z_list();
-          z_conj(l->value->value.l, atom->value);
-          z_print(l->value->value.l);
-          printf(" ");
-          atom = atom->next;
-        }
-        printf(") )");
+        printf("<Function Object>");
       } else {
         printf("<Native Function Object>");
       }
