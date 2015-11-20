@@ -1,5 +1,7 @@
 (ns "zapper.core")
 
+(let nil (list))
+
 (fn empty? (l)
   (cond
     ((= 0 (length l)) (return True))
@@ -30,9 +32,14 @@
     ((= (true? a) (true? b)) (return True))
     (True (return False))))
 
-(fn if (pred result else)
+(fn if (predicate result)
   (cond
-    ((pred) (result))
-    (True (else))))
+    ((true? predicate) (result))
+    (True (nil))))
+
+(fn if (predicate true false)
+  (cond
+    ((true? predicate) (true))
+    (True (false))))
 
 (fn quit () (exit 1))
