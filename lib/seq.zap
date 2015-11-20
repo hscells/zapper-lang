@@ -47,3 +47,9 @@
   (cond
     ((empty? la) (return r))
     (True (zip (rest la) (rest lb) (conj r (conj (conj (list) (first la)) (first lb)))))))
+
+(fn slist (l r)
+  (cond
+    ((empty? l) (return r))
+    (True (slist (rest l) (conj r (eval (first l)))))))
+(fn slist (l) (slist l (list)))
