@@ -1,14 +1,13 @@
-(import "math")
+(import core math)
 
 (fn fizzbuzz (n) (
   (print n)
   (print " ")
-  (cond
-    ((= 0 (mod n 3)) (print "Fizz")))
-  (cond
-    ((= 0 (mod n 5)) (print "Buzz")))
+  (print (if (= 0 (mod n 3)) "Fizz" ""))
+  (print (if (= 0 (mod n 5)) "Buzz" ""))
   (println "")
   (cond
-    ((< n 100) (fizzbuzz (inc n))))))
+    ((< n 100) (fizzbuzz (inc n)))
+    (True (True)))))
 
 (fizzbuzz 1)
